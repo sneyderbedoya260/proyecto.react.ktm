@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --ktm-orange: #FF6600;
+  --ktm-orange-dark: #E05A00;
+  --ktm-black: #0D0D0D;
+  --ktm-gray: #1A1A1A;
+  --ktm-white: #FFFFFF;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  background-color: var(--ktm-black);
+  color: var(--ktm-white);
+}
+
+a {
+  color: inherit;
+}

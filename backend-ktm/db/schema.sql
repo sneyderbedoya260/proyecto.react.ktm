@@ -1,0 +1,50 @@
+CREATE DATABASE IF NOT EXISTS ktm_motos
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE ktm_motos;
+
+CREATE TABLE IF NOT EXISTS roles (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(30) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS usuarios (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(80) NOT NULL,
+  apellido VARCHAR(80) NOT NULL,
+  tipo_documento VARCHAR(10) NOT NULL,
+  numero_documento VARCHAR(12) NOT NULL UNIQUE,
+  direccion VARCHAR(180) NOT NULL,
+  telefono VARCHAR(10) NOT NULL,
+  correo VARCHAR(160) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
+  rol_id INT UNSIGNED NOT NULL,
+  reset_token VARCHAR(255) NULL,
+  reset_token_expira DATETIME NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_usuarios_rol FOREIGN KEY (rol_id) REFERENCES roles(id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS productos (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  titulo VARCHAR(140) NOT NULL,
+  descripcion VARCHAR(255) NOT NULL,
+  detalle TEXT NOT NULL,
+  categoria VARCHAR(60) NOT NULL,
+  imagen_url VARCHAR(500) NOT NULL,
+  precio DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO roles (nombre) VALUES
+  ('Administrador'),
+  ('Empleado'),
+  ('Cliente')
+ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
+

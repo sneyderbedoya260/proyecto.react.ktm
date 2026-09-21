@@ -1,0 +1,209 @@
+.dashboard {
+  max-width: 1180px;
+  margin: 90px auto 60px;
+  padding: 0 20px;
+}
+
+.dashboard-heading {
+  border-left: 4px solid var(--ktm-orange);
+  margin-bottom: 28px;
+  padding-left: 16px;
+}
+
+.dashboard-kicker {
+  color: var(--ktm-orange);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.dashboard-heading h2 {
+  color: var(--ktm-white);
+  font-size: clamp(1.6rem, 3.5vw, 2.3rem);
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.dashboard-heading > p:last-child {
+  color: #a8a8a8;
+  margin: 0;
+}
+
+.dashboard-denegado {
+  max-width: 560px;
+  margin: 140px auto;
+  text-align: center;
+  color: var(--ktm-white);
+  padding: 0 20px;
+}
+
+.dashboard-denegado h2 {
+  color: var(--ktm-orange);
+}
+
+.dashboard-error {
+  background: rgba(255, 80, 80, 0.12);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  border-radius: 8px;
+  color: #ff8a8a;
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+  padding: 10px 14px;
+}
+
+.dashboard-cargando {
+  color: #a8a8a8;
+}
+
+.dashboard-cards {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-bottom: 28px;
+}
+
+.dashboard-card {
+  background: linear-gradient(180deg, #1d1d1d 0%, #151515 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.dashboard-card:hover {
+  border-color: rgba(255, 102, 0, 0.5);
+  transform: translateY(-3px);
+}
+
+.dashboard-card-label {
+  color: #a8a8a8;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.dashboard-card strong {
+  color: var(--ktm-white);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.dashboard-card-alerta strong {
+  color: var(--ktm-orange);
+}
+
+.dashboard-filtros {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin-bottom: 20px;
+  padding: 18px;
+}
+
+.dashboard-filtros label {
+  color: #d0d0d0;
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 700;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.dashboard-filtros input,
+.dashboard-filtros select {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: var(--ktm-white);
+  font-size: 0.85rem;
+  padding: 8px 10px;
+  text-transform: none;
+}
+
+.dashboard-filtros-botones {
+  align-items: end;
+  display: flex;
+  gap: 10px;
+}
+
+.dashboard-filtros-botones button {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 9px 16px;
+  text-transform: uppercase;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.dashboard-filtros-botones button[type="submit"] {
+  background: var(--ktm-orange);
+  color: var(--ktm-black);
+}
+
+.dashboard-filtros-limpiar {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #d0d0d0;
+}
+
+.dashboard-filtros-botones button:hover {
+  transform: translateY(-2px);
+}
+
+.dashboard-resumen-periodo {
+  color: #d0d0d0;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.dashboard-resumen-periodo strong {
+  color: var(--ktm-orange);
+}
+
+.dashboard-graficos {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.dashboard-grafico-card {
+  background: linear-gradient(180deg, #1d1d1d 0%, #151515 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.dashboard-grafico-card h3 {
+  color: var(--ktm-white);
+  font-size: 0.95rem;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+.dashboard-sin-datos {
+  color: #777;
+  font-size: 0.85rem;
+  padding: 40px 0;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .dashboard {
+    margin-top: 70px;
+  }
+}

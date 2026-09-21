@@ -1,0 +1,113 @@
+.footer {
+  background: linear-gradient(180deg, #0d0d0d 0%, #151515 100%);
+  color: var(--ktm-white);
+  border-top: 3px solid var(--ktm-orange);
+  margin-top: auto;
+  padding: 36px 20px 18px;
+}
+
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.footer-brand,
+.footer-contact,
+.footer-whatsapp {
+  min-width: 0;
+}
+
+.footer-kicker {
+  margin: 0 0 8px;
+  color: var(--ktm-orange);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.footer-brand h3,
+.footer-contact h4,
+.footer-whatsapp h4 {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.footer-brand p,
+.footer-contact li {
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.7;
+}
+
+.footer-contact ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-contact li {
+  margin-bottom: 8px;
+}
+
+.whatsapp-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--ktm-orange), #ff8d3a);
+  color: var(--ktm-white);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 28px rgba(255, 102, 0, 0.35);
+}
+
+.whatsapp-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(255, 102, 0, 0.45);
+}
+
+.footer-bottom {
+  max-width: 1200px;
+  margin: 26px auto 0;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.footer-bottom p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.9rem;
+}
+
+.footer-bottom span {
+  color: var(--ktm-orange);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .footer-inner {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer-inner {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .footer {
+    padding-top: 28px;
+  }
+}

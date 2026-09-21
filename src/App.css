@@ -1,0 +1,13 @@
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--ktm-black);
+  padding-top: 184px;
+}
+
+@media (max-width: 640px) {
+  .App {
+    padding-top: 75px;
+  }
+}

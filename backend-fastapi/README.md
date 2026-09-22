@@ -134,3 +134,25 @@ Pendiente para las siguientes fases que acordamos:
   facturas y dashboard. Faltaría conectar PQR/Chatbot cuando se construyan.
 - **REQ-20, REQ-24, REQ-25**: despliegue en la nube, revisión final de
   seguridad, y pruebas documentadas con Postman.
+
+## Despliegue Neon + Render + Vercel
+
+1. En Neon, abre el SQL Editor y ejecuta todo `backend-fastapi/db/schema_neon.sql`.
+  Este archivo crea la estructura PostgreSQL y los tres roles base.
+2. En Render, crea el servicio usando `render.yaml` y configura:
+  `DATABASE_URL` con la URL pooled de Neon, `JWT_SECRET`, `EMAIL_USER`,
+  `EMAIL_PASS` y `FRONTEND_URL` con la URL final de Vercel.
+3. En Vercel, configura `VITE_API_URL` con la URL pública de Render más
+  `/api`, por ejemplo `https://tu-api.onrender.com/api`, y vuelve a desplegar.
+4. Verifica `https://tu-api.onrender.com/api/salud` y después prueba registro,
+  inicio de sesión y listado de productos.
+
+El esquema no incluye los registros de la antigua base MySQL. Para conservar
+usuarios y productos hay que exportarlos de MySQL y convertirlos a inserts
+PostgreSQL antes de probar el login en producción.
+
+Para Turso usa `backend-fastapi/db/schema_turso.sql` y ejecuta:
+`turso db shell NOMBRE_DE_TU_DB < backend-fastapi/db/schema_turso.sql`.
+En Render configura `TURSO_DATABASE_URL` con la URL `libsql://...` de Turso y
+`TURSO_AUTH_TOKEN` con el token de acceso. Estas variables tienen prioridad
+sobre `DATABASE_URL`.

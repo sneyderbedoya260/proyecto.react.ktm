@@ -23,18 +23,18 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        if self.TURSO_DATABASE_URL:
-            url = self.TURSO_DATABASE_URL
-            if url.startswith("libsql://"):
-                return url.replace("libsql://", "sqlite+libsql://", 1)
-            return url
-
         if self.DATABASE_URL:
             url = self.DATABASE_URL
             if url.startswith("postgres://"):
                 return url.replace("postgres://", "postgresql+psycopg://", 1)
             if url.startswith("postgresql://"):
                 return url.replace("postgresql://", "postgresql+psycopg://", 1)
+            return url
+
+        if self.TURSO_DATABASE_URL:
+            url = self.TURSO_DATABASE_URL
+            if url.startswith("libsql://"):
+                return url.replace("libsql://", "sqlite+libsql://", 1)
             return url
 
         return (

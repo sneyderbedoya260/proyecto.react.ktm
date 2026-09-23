@@ -32,4 +32,16 @@ app.include_router(dashboard.router)
 
 @app.get("/api/salud", tags=["Salud"])
 def salud():
-    return {"estado": "ok", "servicio": "KTM Catálogo API (FastAPI)"}
+    """Estado del servicio y de su configuración.
+
+    Informa si el envío de correo está configurado (solo si las variables
+    existen, nunca su valor) porque un fallo ahí es silencioso por diseño:
+    /api/auth/recover-password responde igual se envíe el correo o no.
+    """
+    return {
+        "estado": "ok",
+        "servicio": "KTM Catálogo API (FastAPI)",
+        "email_user_definido": bool(settings.EMAIL_USER),
+        "email_pass_definido": bool(settings.EMAIL_PASS),
+        "correo_configurado": bool(settings.EMAIL_USER and settings.EMAIL_PASS),
+    }

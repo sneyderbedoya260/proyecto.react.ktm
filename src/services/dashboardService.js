@@ -21,7 +21,7 @@ export function getFiltrosDashboard() {
   return solicitar('/dashboard/filtros');
 }
 
-export function getVentasDashboard(filtros = {}) {
+export function getCatalogoDashboard(filtros = {}) {
   const parametros = new URLSearchParams();
   Object.entries(filtros).forEach(([clave, valor]) => {
     if (valor !== '' && valor !== null && valor !== undefined) {
@@ -29,5 +29,5 @@ export function getVentasDashboard(filtros = {}) {
     }
   });
   const query = parametros.toString();
-  return solicitar(`/dashboard/ventas${query ? `?${query}` : ''}`);
+  return solicitar(`/dashboard/catalogo${query ? `?${query}` : ''}`);
 }

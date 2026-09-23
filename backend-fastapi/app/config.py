@@ -63,6 +63,11 @@ class Settings(BaseSettings):
         return {}
 
     @property
+    def frontend_url_principal(self) -> str:
+        """La primera de FRONTEND_URL: la que se usa para armar enlaces."""
+        return self.FRONTEND_URL.split(",")[0].strip().rstrip("/")
+
+    @property
     def origenes_cors(self) -> list[str]:
         """FRONTEND_URL acepta varias URLs separadas por coma."""
         origenes = [u.strip().rstrip("/") for u in self.FRONTEND_URL.split(",") if u.strip()]

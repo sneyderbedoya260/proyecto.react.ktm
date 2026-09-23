@@ -67,7 +67,7 @@ def recuperar_password(datos: RecuperarIn, db: Session = Depends(get_db)):
             usuario.reset_token_expira = datetime.utcnow() + timedelta(hours=1)
             db.commit()
 
-            enlace = f"{settings.FRONTEND_URL}/restablecer-contrasena?token={token}"
+            enlace = f"{settings.frontend_url_principal}/restablecer-contrasena?token={token}"
             enviar_correo_recuperacion(datos.email, enlace)
 
         return {"mensaje": "Si el correo existe, recibirás instrucciones de recuperación."}

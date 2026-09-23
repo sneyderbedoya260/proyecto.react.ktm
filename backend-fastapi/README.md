@@ -94,9 +94,13 @@ más cambios.
 
 | Método | Ruta | Requerimiento |
 |---|---|---|
-| GET | `/api/dashboard/resumen` | REQ-10 — Cards: usuarios, productos, ventas, facturación, PQR |
-| GET | `/api/dashboard/filtros` | Opciones para poblar los `<select>` de filtros |
-| GET | `/api/dashboard/ventas?fecha_inicio=&fecha_fin=&agrupacion=dia\|semana\|mes&producto_id=&cliente_id=&estado=` | REQ-11, REQ-13 — gráfico de barras/línea con filtros |
+| GET | `/api/dashboard/resumen` | REQ-10 — Cards: modelos, disponibles, agotados, categorías, usuarios, PQR |
+| GET | `/api/dashboard/filtros` | Opciones para poblar los `<select>` de filtros (categorías y estados) |
+| GET | `/api/dashboard/catalogo?fecha_inicio=&fecha_fin=&agrupacion=dia\|semana\|mes&categoria=&estado=` | REQ-11, REQ-13 — gráficos de barras/línea con filtros |
+
+El sitio es un catálogo de consulta, no una tienda, así que el dashboard mide
+el **catálogo** (modelos por categoría, por estado y publicados por periodo) y
+la atención al usuario (PQR). No muestra ventas ni facturación.
 
 **REQ-12 (seguridad por roles):** todo `/api/dashboard/*` exige rol
 Administrador o Empleado (`requerir_rol`). Un Cliente recibe 403 si intenta

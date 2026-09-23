@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import Header from './components/header';
 import Footer from './components/footer';
+import Chatbot from './components/Chatbot';
 import Index from './pages/index';
 import QuienesSomos from './pages/quienessomos';
 import Contacto from './pages/contacto';
@@ -44,6 +45,7 @@ function App() {
       </Routes>
 
       <Footer />
+      <Chatbot />
     </div>
   );
 }

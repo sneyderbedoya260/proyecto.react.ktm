@@ -44,10 +44,15 @@ Esto crea `ventas`, `detalle_ventas`, `facturas`, `detalle_facturas`, `pqr`,
 funcionando igual — los passwords con bcrypt son compatibles entre Node y
 Python sin que nadie tenga que registrarse de nuevo.
 
-## 4. Copiar las imágenes existentes
+## 4. Imágenes
 
-Ya vienen copiadas en `public/images/` desde el backend anterior. Si subes
-imágenes nuevas por el panel de admin, se guardan ahí automáticamente.
+Las imágenes del catálogo inicial viven en `public/images/` **del frontend**
+(la raíz del repo), y se sirven como archivos estáticos.
+
+Las que subas por el panel de admin **no** se guardan en disco: van a la tabla
+`imagenes` de la base y se sirven desde `/api/imagenes/{nombre}`. Es lo que
+permite que la subida también funcione desplegado, donde el disco es de solo
+lectura (ver la sección de despliegue más abajo).
 
 ## 5. Levantar el servidor
 
@@ -66,19 +71,6 @@ frontend normalmente con `npm run dev`. El login, registro, recuperar
 contraseña, listar productos y crear/editar/eliminar productos (incluida la
 foto por explorador de archivos) ya funcionan contra este nuevo backend sin
 más cambios.
-
----
-
-## ⚠️ Cosa que encontré y no toqué (avísame cómo prefieres resolverla)
-
-En tu `admin.jsx` el selector de "Estado" del producto tiene las opciones
-`Disponible` / `Agotado` / `Inactivo`, pero la tabla `productos` en la base
-de datos solo acepta `Activo` / `Inactivo` (ENUM). Si guardas un producto
-como "Disponible" o "Agotado", la base de datos lo va a rechazar con error.
-Dime si prefieres:
-- Cambiar las opciones del `<select>` a `Activo`/`Inactivo` (más rápido), o
-- Ampliar el ENUM de la base de datos a los 3 estados que ya tienes en el
-  formulario.
 
 ---
 
@@ -135,24 +127,67 @@ Pendiente para las siguientes fases que acordamos:
 - **REQ-20, REQ-24, REQ-25**: despliegue en la nube, revisión final de
   seguridad, y pruebas documentadas con Postman.
 
-## Despliegue Neon + Render + Vercel
+## Despliegue en producción (Neon + Vercel)
 
-1. En Neon, abre el SQL Editor y ejecuta todo `backend-fastapi/db/schema_neon.sql`.
-  Este archivo crea la estructura PostgreSQL y los tres roles base.
-2. En Render, crea el servicio usando `render.yaml` y configura:
-  `DATABASE_URL` con la URL pooled de Neon, `JWT_SECRET`, `EMAIL_USER`,
-  `EMAIL_PASS` y `FRONTEND_URL` con la URL final de Vercel.
-3. En Vercel, configura `VITE_API_URL` con la URL pública de Render más
-  `/api`, por ejemplo `https://tu-api.onrender.com/api`, y vuelve a desplegar.
-4. Verifica `https://tu-api.onrender.com/api/salud` y después prueba registro,
-  inicio de sesión y listado de productos.
+El proyecto está desplegado en **dos proyectos de Vercel** que comparten la
+misma base de datos en Neon:
 
-El esquema no incluye los registros de la antigua base MySQL. Para conservar
-usuarios y productos hay que exportarlos de MySQL y convertirlos a inserts
-PostgreSQL antes de probar el login en producción.
+| Pieza | Dónde vive | URL |
+|---|---|---|
+| Frontend (React + Vite) | Vercel, proyecto `proyecto-react-ktm`, root `.` | https://proyecto-react-ktm.vercel.app |
+| Backend (FastAPI) | Vercel, proyecto `ktm-catalogo-api`, root `backend-fastapi` | https://ktm-catalogo-api.vercel.app |
+| Base de datos | Neon, proyecto `react.ktm` (`damp-voice-05288984`) | endpoint pooled `...-pooler...neon.tech` |
 
-Para Turso usa `backend-fastapi/db/schema_turso.sql` y ejecuta:
-`turso db shell NOMBRE_DE_TU_DB < backend-fastapi/db/schema_turso.sql`.
-En Render configura `TURSO_DATABASE_URL` con la URL `libsql://...` de Turso y
-`TURSO_AUTH_TOKEN` con el token de acceso. Estas variables tienen prioridad
-sobre `DATABASE_URL`.
+Vercel detecta FastAPI automáticamente por `requirements.txt` y toma
+`app/main.py` como punto de entrada; no hace falta `vercel.json` en el backend.
+
+### Variables de entorno
+
+En el proyecto **`ktm-catalogo-api`** (Production, Preview y Development):
+
+| Variable | Valor |
+|---|---|
+| `DATABASE_URL` | Cadena **pooled** de Neon (`postgresql://...-pooler...?sslmode=require`) |
+| `JWT_SECRET` | Clave larga y aleatoria |
+| `FRONTEND_URL` | `https://proyecto-react-ktm.vercel.app` (acepta varias separadas por coma) |
+| `IVA_PORCENTAJE` | `0.19` |
+| `EMAIL_USER` / `EMAIL_PASS` | Correo y contraseña de aplicación de Gmail |
+
+En el proyecto **`proyecto-react-ktm`**:
+
+| Variable | Valor |
+|---|---|
+| `VITE_API_URL` | `https://ktm-catalogo-api.vercel.app/api` |
+
+### Crear la base desde cero
+
+```bash
+export DATABASE_URL="postgresql://...-pooler...neon.tech/neondb?sslmode=require"
+python db/inicializar_neon.py
+```
+
+Crea el esquema (`db/schema_neon.sql`), el usuario administrador y el catálogo
+inicial. Es idempotente: se puede volver a correr sin duplicar nada.
+
+### Volver a desplegar
+
+```bash
+cd backend-fastapi && npx vercel deploy --prod   # backend
+cd ..              && npx vercel deploy --prod   # frontend
+```
+
+### Diferencias con el entorno local
+
+Dos cosas cambian al correr en Vercel, porque una función serverless tiene el
+disco en **solo lectura** y no conserva nada entre invocaciones:
+
+- Las imágenes subidas desde el panel de administración **se guardan en la base
+  de datos** (tabla `imagenes`) y se sirven desde `/api/imagenes/{nombre}`, no
+  en `public/images/`.
+- Las imágenes del catálogo inicial se sirven como estáticos desde
+  `public/images/` **del frontend**, por eso sus rutas son relativas
+  (`/images/moto3.jpg`).
+
+También se usa `NullPool` en SQLAlchemy cuando `VERCEL` está definido: cada
+invocación puede caer en una instancia distinta, así que mantener un pool
+propio solo agotaría las conexiones de Neon.

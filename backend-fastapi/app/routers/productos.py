@@ -1,20 +1,17 @@
 import os
 import uuid
-from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import requerir_rol
-from app.models import Producto
+from app.models import Imagen, Producto
 from app.schemas import MensajeOut, ProductoIn, ProductoOut
 
 router = APIRouter(prefix="/api/productos", tags=["Productos"])
-
-CARPETA_IMAGENES = Path(__file__).resolve().parent.parent.parent / "public" / "images"
-CARPETA_IMAGENES.mkdir(parents=True, exist_ok=True)
 
 TIPOS_PERMITIDOS = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 TAMANO_MAXIMO_MB = 5
@@ -81,8 +78,15 @@ def eliminar_producto(
 async def subir_imagen(
     request: Request,
     imagen: UploadFile = File(...),
+    db: Session = Depends(get_db),
     _usuario: dict = Depends(requerir_rol("Administrador", "Empleado")),
 ):
+    """Guarda la imagen en la base de datos y devuelve la URL para servirla.
+
+    Antes se escribía en public/images/, pero en una función serverless el
+    disco es de solo lectura y además se borra entre invocaciones, así que la
+    imagen se guarda en Neon y se sirve desde /api/imagenes/{nombre}.
+    """
     if imagen.content_type not in TIPOS_PERMITIDOS:
         raise HTTPException(
             status_code=400,
@@ -95,8 +99,15 @@ async def subir_imagen(
 
     extension = os.path.splitext(imagen.filename or "")[1].lower() or ".jpg"
     nombre_unico = f"moto-{uuid.uuid4().hex}{extension}"
-    ruta_destino = CARPETA_IMAGENES / nombre_unico
-    ruta_destino.write_bytes(contenido)
 
-    url = f"{request.base_url}images/{nombre_unico}"
+    db.add(Imagen(nombre=nombre_unico, tipo_mime=imagen.content_type, contenido=contenido))
+    db.commit()
+
+    # Absoluta: el frontend está en otro dominio y no puede resolverla relativa.
+    base = str(request.base_url).rstrip("/")
+    if settings.es_serverless and base.startswith("http://"):
+        # Detrás del proxy de Vercel el esquema puede llegar como http; forzar
+        # https evita que el navegador bloquee la imagen por contenido mixto.
+        base = "https://" + base[len("http://") :]
+    url = f"{base}/api/imagenes/{nombre_unico}"
     return {"mensaje": "Imagen subida correctamente.", "url": url, "imagen_url": url}

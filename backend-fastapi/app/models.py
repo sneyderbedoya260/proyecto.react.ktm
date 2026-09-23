@@ -1,8 +1,8 @@
 from sqlalchemy import (
     DECIMAL,
     TIMESTAMP,
+    LargeBinary,
     Column,
-    Enum,
     ForeignKey,
     Integer,
     String,
@@ -33,7 +33,7 @@ class Usuario(Base):
     telefono = Column(String(10), nullable=False)
     correo = Column(String(160), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
-    estado = Column(Enum("Activo", "Inactivo", name="estado_usuario"), nullable=False, default="Activo")
+    estado = Column(String(10), nullable=False, default="Activo")
     rol_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
     reset_token = Column(String(255), nullable=True)
     reset_token_expira = Column(TIMESTAMP, nullable=True)
@@ -52,11 +52,7 @@ class Producto(Base):
     categoria = Column(String(60), nullable=False)
     imagen_url = Column(String(500), nullable=False)
     precio = Column(DECIMAL(12, 2), nullable=False, default=0)
-    estado = Column(
-        Enum("Disponible", "Agotado", "Inactivo", name="estado_producto"),
-        nullable=False,
-        default="Disponible",
-    )
+    estado = Column(String(12), nullable=False, default="Disponible")
     creado_en = Column(TIMESTAMP, server_default=func.now())
     actualizado_en = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
@@ -74,11 +70,7 @@ class Venta(Base):
     descuento = Column(DECIMAL(12, 2), nullable=False, default=0)
     impuestos = Column(DECIMAL(12, 2), nullable=False, default=0)
     total = Column(DECIMAL(12, 2), nullable=False, default=0)
-    estado = Column(
-        Enum("Pendiente", "Cotizado", "Confirmado", "Cancelado", name="estado_venta"),
-        nullable=False,
-        default="Pendiente",
-    )
+    estado = Column(String(12), nullable=False, default="Pendiente")
     notas = Column(String(255), nullable=True)
 
     cliente = relationship("Usuario", foreign_keys=[cliente_id])
@@ -113,7 +105,7 @@ class Factura(Base):
     descuento = Column(DECIMAL(12, 2), nullable=False, default=0)
     impuestos = Column(DECIMAL(12, 2), nullable=False)
     total = Column(DECIMAL(12, 2), nullable=False)
-    estado = Column(Enum("Emitida", "Anulada", name="estado_factura"), nullable=False, default="Emitida")
+    estado = Column(String(8), nullable=False, default="Emitida")
 
     venta = relationship("Venta", back_populates="factura")
     cliente = relationship("Usuario")
@@ -140,14 +132,10 @@ class PQR(Base):
 
     id = Column(Integer, primary_key=True)
     cliente_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
-    tipo = Column(Enum("Peticion", "Queja", "Reclamo", name="tipo_pqr"), nullable=False)
+    tipo = Column(String(8), nullable=False)
     asunto = Column(String(150), nullable=False)
     mensaje = Column(Text, nullable=False)
-    estado = Column(
-        Enum("Pendiente", "En proceso", "Respondida", "Cerrada", name="estado_pqr"),
-        nullable=False,
-        default="Pendiente",
-    )
+    estado = Column(String(12), nullable=False, default="Pendiente")
     respuesta = Column(Text, nullable=True)
     creado_en = Column(TIMESTAMP, server_default=func.now())
     actualizado_en = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
@@ -161,7 +149,7 @@ class Conversacion(Base):
     id = Column(Integer, primary_key=True)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
     iniciado_en = Column(TIMESTAMP, server_default=func.now())
-    estado = Column(Enum("Activa", "Cerrada", name="estado_conversacion"), nullable=False, default="Activa")
+    estado = Column(String(7), nullable=False, default="Activa")
 
     mensajes = relationship("Mensaje", back_populates="conversacion", cascade="all, delete-orphan")
 
@@ -171,8 +159,24 @@ class Mensaje(Base):
 
     id = Column(Integer, primary_key=True)
     conversacion_id = Column(Integer, ForeignKey("conversaciones.id"), nullable=False)
-    emisor = Column(Enum("Usuario", "Bot", name="emisor_mensaje"), nullable=False)
+    emisor = Column(String(7), nullable=False)
     contenido = Column(Text, nullable=False)
     enviado_en = Column(TIMESTAMP, server_default=func.now())
 
     conversacion = relationship("Conversacion", back_populates="mensajes")
+
+
+class Imagen(Base):
+    """Imágenes subidas desde el panel de administración.
+
+    Se guardan en la base y no en disco: el sistema de archivos de una función
+    serverless es de solo lectura y no persiste entre invocaciones.
+    """
+
+    __tablename__ = "imagenes"
+
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(120), unique=True, nullable=False)
+    tipo_mime = Column(String(60), nullable=False)
+    contenido = Column(LargeBinary, nullable=False)
+    creado_en = Column(TIMESTAMP, server_default=func.now())

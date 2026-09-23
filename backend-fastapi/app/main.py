@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.routers import auth, dashboard, facturas, productos, reportes, ventas
+from app.routers import auth, dashboard, facturas, imagenes, productos, reportes, ventas
 
 app = FastAPI(
     title="KTM Catálogo — API",
@@ -11,18 +10,20 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# El frontend vive en otro dominio de Vercel, así que el navegador exige CORS.
+# El regex cubre además las URLs de preview que Vercel genera por cada commit.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:5173"],
+    allow_origins=settings.origenes_cors,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.mount("/images", StaticFiles(directory="public/images"), name="images")
-
 app.include_router(auth.router)
 app.include_router(productos.router)
+app.include_router(imagenes.router)
 app.include_router(ventas.router)
 app.include_router(facturas.router)
 app.include_router(reportes.router)

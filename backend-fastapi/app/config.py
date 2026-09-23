@@ -1,3 +1,5 @@
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +24,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @property
+    def es_serverless(self) -> bool:
+        """True cuando corremos como Vercel Function y no como servidor propio."""
+        return bool(os.environ.get("VERCEL"))
+
+    @property
     def database_url(self) -> str:
         if self.DATABASE_URL:
             url = self.DATABASE_URL
@@ -37,6 +44,13 @@ class Settings(BaseSettings):
                 return url.replace("libsql://", "sqlite+libsql://", 1)
             return url
 
+        if self.es_serverless:
+            raise RuntimeError(
+                "Falta la variable de entorno DATABASE_URL. Configúrala en el proyecto "
+                "de Vercel con la cadena de conexión de Neon (la del endpoint '-pooler')."
+            )
+
+        # Solo para desarrollo local contra el MySQL antiguo.
         return (
             f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}"
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?charset=utf8mb4"
@@ -44,9 +58,16 @@ class Settings(BaseSettings):
 
     @property
     def database_connect_args(self) -> dict[str, str]:
-        if self.TURSO_AUTH_TOKEN:
+        if self.TURSO_AUTH_TOKEN and not self.DATABASE_URL:
             return {"auth_token": self.TURSO_AUTH_TOKEN}
         return {}
+
+    @property
+    def origenes_cors(self) -> list[str]:
+        """FRONTEND_URL acepta varias URLs separadas por coma."""
+        origenes = [u.strip().rstrip("/") for u in self.FRONTEND_URL.split(",") if u.strip()]
+        origenes.append("http://localhost:5173")
+        return list(dict.fromkeys(origenes))
 
 
 settings = Settings()

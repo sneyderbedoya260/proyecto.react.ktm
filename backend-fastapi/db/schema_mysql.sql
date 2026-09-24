@@ -6,6 +6,10 @@
 -- phpMyAdmin (XAMPP) y mostrar el diagrama de relaciones en la pestaña
 -- "Diseñador".
 --
+-- El sitio es un CATÁLOGO DE CONSULTA (no una tienda), así que el modelo no
+-- incluye ventas ni facturación: cubre el catálogo de productos, los usuarios
+-- y roles, las PQR y el chatbot.
+--
 -- Motor: InnoDB en todas las tablas. Es lo que hace que las claves foráneas
 -- se apliquen de verdad y que phpMyAdmin dibuje las relaciones solo.
 --
@@ -15,15 +19,7 @@
 --     evitando anomalías de inserción/actualización y datos inconsistentes.
 --   * Cada tabla tiene clave primaria propia; los atributos no clave dependen
 --     solo de la clave (sin dependencias transitivas).
---   * Las relaciones N:N (una venta con varios productos) se resuelven con
---     tablas puente: detalle_ventas y detalle_facturas.
---
--- Denormalización intencional (documentada, no es un error):
---   * detalle_facturas guarda `descripcion` y `precio_unitario`, y las tablas
---     de cabecera guardan subtotales/totales. En facturación esto es correcto:
---     una factura es un documento histórico y debe conservar los valores tal
---     como estaban al emitirse, aunque el producto cambie de nombre o precio
---     después. No se recalcula desde el producto actual.
+--   * Una conversación del chatbot tiene muchos mensajes (relación 1:N).
 -- =========================================================================
 
 CREATE DATABASE IF NOT EXISTS ktm_motos
@@ -36,10 +32,6 @@ USE ktm_motos;
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS mensajes;
 DROP TABLE IF EXISTS conversaciones;
-DROP TABLE IF EXISTS detalle_facturas;
-DROP TABLE IF EXISTS facturas;
-DROP TABLE IF EXISTS detalle_ventas;
-DROP TABLE IF EXISTS ventas;
 DROP TABLE IF EXISTS pqr;
 DROP TABLE IF EXISTS intentos_acceso;
 DROP TABLE IF EXISTS imagenes;
@@ -124,77 +116,7 @@ CREATE TABLE imagenes (
 ) ENGINE=InnoDB;
 
 -- =========================================================================
--- VENTAS  (= solicitud de interés / cotización de un cliente)
---   cliente_id           -> usuarios  (quién solicita)
---   usuario_operador_id  -> usuarios  (quién la atiende; puede ser NULL)
--- =========================================================================
-CREATE TABLE ventas (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  cliente_id INT UNSIGNED NOT NULL,
-  usuario_operador_id INT UNSIGNED NULL,
-  fecha_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  subtotal DECIMAL(12, 2) NOT NULL DEFAULT 0,
-  descuento DECIMAL(12, 2) NOT NULL DEFAULT 0,
-  impuestos DECIMAL(12, 2) NOT NULL DEFAULT 0,
-  total DECIMAL(12, 2) NOT NULL DEFAULT 0,
-  estado ENUM('Pendiente', 'Cotizado', 'Confirmado', 'Cancelado') NOT NULL DEFAULT 'Pendiente',
-  notas VARCHAR(255) NULL,
-  CONSTRAINT fk_ventas_cliente FOREIGN KEY (cliente_id) REFERENCES usuarios(id)
-    ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT fk_ventas_operador FOREIGN KEY (usuario_operador_id) REFERENCES usuarios(id)
-    ON UPDATE CASCADE ON DELETE SET NULL
-) ENGINE=InnoDB;
-
--- Tabla puente venta <-> producto (resuelve la relación N:N)
-CREATE TABLE detalle_ventas (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  venta_id INT UNSIGNED NOT NULL,
-  producto_id INT UNSIGNED NOT NULL,
-  cantidad INT UNSIGNED NOT NULL DEFAULT 1,
-  precio_unitario DECIMAL(12, 2) NOT NULL,
-  subtotal DECIMAL(12, 2) NOT NULL,
-  CONSTRAINT fk_detalle_ventas_venta FOREIGN KEY (venta_id) REFERENCES ventas(id)
-    ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT fk_detalle_ventas_producto FOREIGN KEY (producto_id) REFERENCES productos(id)
-    ON UPDATE CASCADE ON DELETE RESTRICT
-) ENGINE=InnoDB;
-
--- =========================================================================
--- FACTURAS  (comprobante generado a partir de una venta)
--- =========================================================================
-CREATE TABLE facturas (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  venta_id INT UNSIGNED NOT NULL UNIQUE,   -- 1:1 con la venta
-  numero_factura VARCHAR(30) NOT NULL UNIQUE,
-  cliente_id INT UNSIGNED NOT NULL,
-  fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  subtotal DECIMAL(12, 2) NOT NULL,
-  descuento DECIMAL(12, 2) NOT NULL DEFAULT 0,
-  impuestos DECIMAL(12, 2) NOT NULL,
-  total DECIMAL(12, 2) NOT NULL,
-  estado ENUM('Emitida', 'Anulada') NOT NULL DEFAULT 'Emitida',
-  CONSTRAINT fk_facturas_venta FOREIGN KEY (venta_id) REFERENCES ventas(id)
-    ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT fk_facturas_cliente FOREIGN KEY (cliente_id) REFERENCES usuarios(id)
-    ON UPDATE CASCADE ON DELETE RESTRICT
-) ENGINE=InnoDB;
-
-CREATE TABLE detalle_facturas (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  factura_id INT UNSIGNED NOT NULL,
-  producto_id INT UNSIGNED NOT NULL,
-  descripcion VARCHAR(200) NOT NULL,   -- snapshot histórico (ver cabecera)
-  cantidad INT UNSIGNED NOT NULL,
-  precio_unitario DECIMAL(12, 2) NOT NULL,
-  subtotal DECIMAL(12, 2) NOT NULL,
-  CONSTRAINT fk_detalle_facturas_factura FOREIGN KEY (factura_id) REFERENCES facturas(id)
-    ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT fk_detalle_facturas_producto FOREIGN KEY (producto_id) REFERENCES productos(id)
-    ON UPDATE CASCADE ON DELETE RESTRICT
-) ENGINE=InnoDB;
-
--- =========================================================================
--- PQR  (Peticiones, Quejas y Reclamos)
+-- PQR  (Peticiones, Quejas y Reclamos)  — cliente_id -> usuarios
 -- =========================================================================
 CREATE TABLE pqr (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -243,12 +165,8 @@ CREATE TABLE intentos_acceso (
 ) ENGINE=InnoDB;
 
 -- =========================================================================
--- ÍNDICES DE APOYO (para filtros de reportes y dashboards)
+-- ÍNDICE DE APOYO
 -- =========================================================================
-CREATE INDEX idx_ventas_fecha ON ventas (fecha_hora);
-CREATE INDEX idx_ventas_estado ON ventas (estado);
-CREATE INDEX idx_detalle_ventas_producto ON detalle_ventas (producto_id);
-CREATE INDEX idx_facturas_fecha ON facturas (fecha);
 CREATE INDEX idx_productos_categoria ON productos (categoria_id);
 
 -- =========================================================================
@@ -280,6 +198,18 @@ VALUES
    '$2b$10$khaM5WfYszBfCHGQwEZ9oO6OdfFEPx0QqaEAQzibRzgZTFcXHSrwS',
    'Activo',
    (SELECT id FROM roles WHERE nombre = 'Administrador'));
+
+-- Cliente de ejemplo (para mostrar la relación usuarios<->roles y las PQR).
+--   Correo: cliente@demo.com   Contraseña: Admin1234  (mismo hash de ejemplo)
+INSERT INTO usuarios
+  (nombre, apellido, tipo_documento_id, numero_documento, direccion, telefono, correo, password_hash, estado, rol_id)
+VALUES
+  ('Camila', 'Torres',
+   (SELECT id FROM tipos_documento WHERE codigo = 'CC'),
+   '1122334455', 'Calle 10 #20-30', '3011234567', 'cliente@demo.com',
+   '$2b$10$khaM5WfYszBfCHGQwEZ9oO6OdfFEPx0QqaEAQzibRzgZTFcXHSrwS',
+   'Activo',
+   (SELECT id FROM roles WHERE nombre = 'Cliente'));
 
 -- Catálogo de 10 modelos, cada uno enlazado a su categoría por clave foránea.
 INSERT INTO productos (titulo, descripcion, detalle, categoria_id, imagen_url, precio, estado) VALUES
@@ -314,38 +244,8 @@ INSERT INTO productos (titulo, descripcion, detalle, categoria_id, imagen_url, p
    '399 cc y 45 hp en un chasis enduro con suspensión de 230 mm de recorrido.',
    (SELECT id FROM categorias WHERE nombre = 'Enduro'), '/images/moto10.png', 31000000, 'Disponible');
 
--- Cliente de ejemplo para poder mostrar ventas/facturas con relaciones reales.
---   Correo: cliente@demo.com   Contraseña: Admin1234  (mismo hash de ejemplo)
-INSERT INTO usuarios
-  (nombre, apellido, tipo_documento_id, numero_documento, direccion, telefono, correo, password_hash, estado, rol_id)
-VALUES
-  ('Camila', 'Torres',
-   (SELECT id FROM tipos_documento WHERE codigo = 'CC'),
-   '1122334455', 'Calle 10 #20-30', '3011234567', 'cliente@demo.com',
-   '$2b$10$khaM5WfYszBfCHGQwEZ9oO6OdfFEPx0QqaEAQzibRzgZTFcXHSrwS',
-   'Activo',
-   (SELECT id FROM roles WHERE nombre = 'Cliente'));
-
--- Una venta de ejemplo con dos líneas, su factura y el detalle: así el
--- diagrama de relaciones se ve con datos reales en todas las tablas puente.
-INSERT INTO ventas (cliente_id, usuario_operador_id, subtotal, descuento, impuestos, total, estado, notas)
-VALUES (
-  (SELECT id FROM usuarios WHERE correo = 'cliente@demo.com'),
-  (SELECT id FROM usuarios WHERE correo = 'admin@ktm.com'),
-  130000000, 0, 24700000, 154700000, 'Confirmado', 'Cotización de dos modelos.'
-);
-
-INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio_unitario, subtotal) VALUES
-  (1, (SELECT id FROM productos WHERE titulo = 'KTM 990 Duke'), 1, 72000000, 72000000),
-  (1, (SELECT id FROM productos WHERE titulo = 'KTM 890 SMT'),  1, 76000000, 76000000);
-
-INSERT INTO facturas (venta_id, numero_factura, cliente_id, subtotal, descuento, impuestos, total, estado)
-VALUES (
-  1, 'FAC-000001',
-  (SELECT id FROM usuarios WHERE correo = 'cliente@demo.com'),
-  148000000, 0, 28120000, 176120000, 'Emitida'
-);
-
-INSERT INTO detalle_facturas (factura_id, producto_id, descripcion, cantidad, precio_unitario, subtotal) VALUES
-  (1, (SELECT id FROM productos WHERE titulo = 'KTM 990 Duke'), 'KTM 990 Duke', 1, 72000000, 72000000),
-  (1, (SELECT id FROM productos WHERE titulo = 'KTM 890 SMT'),  'KTM 890 SMT',  1, 76000000, 76000000);
+-- PQR de ejemplo (relación pqr -> usuarios).
+INSERT INTO pqr (cliente_id, tipo, asunto, mensaje, estado) VALUES
+  ((SELECT id FROM usuarios WHERE correo = 'cliente@demo.com'),
+   'Peticion', 'Disponibilidad de la 890 Adventure R',
+   '¿Tienen disponible la KTM 890 Adventure R para verla en la sede?', 'Pendiente');

@@ -30,7 +30,7 @@ En el navegador entra a: **http://localhost/phpmyadmin**
 2. **Seleccionar archivo** → elige `backend-fastapi/db/schema_mysql.sql`.
 3. Baja y pulsa **Continuar** (Go).
 4. Debe salir el mensaje verde *"La importación se ejecutó correctamente"* y a
-   la izquierda aparecerá la base **ktm_motos** con sus 14 tablas.
+   la izquierda aparecerá la base **ktm_motos** con sus 11 tablas.
 
 ## 4. Ver el diagrama de relaciones (lo que hay que mostrar)
 
@@ -53,21 +53,13 @@ o **PNG** y descárgalo: ese archivo es el entregable del modelo relacional.
 
 ---
 
-## Relaciones del modelo (14 claves foráneas)
+## Relaciones del modelo (6 claves foráneas)
 
 | Tabla | Columna | Apunta a |
 |---|---|---|
 | usuarios | rol_id | roles |
 | usuarios | tipo_documento_id | tipos_documento |
 | productos | categoria_id | categorias |
-| ventas | cliente_id | usuarios |
-| ventas | usuario_operador_id | usuarios |
-| detalle_ventas | venta_id | ventas |
-| detalle_ventas | producto_id | productos |
-| facturas | venta_id | ventas |
-| facturas | cliente_id | usuarios |
-| detalle_facturas | factura_id | facturas |
-| detalle_facturas | producto_id | productos |
 | pqr | cliente_id | usuarios |
 | conversaciones | usuario_id | usuarios |
 | mensajes | conversacion_id | conversaciones |
@@ -80,12 +72,8 @@ o **PNG** y descárgalo: ese archivo es el entregable del modelo relacional.
 - **3FN:** los valores que antes se repetían como texto se movieron a tablas de
   catálogo — **roles**, **tipos_documento** y **categorias** — enlazadas por
   clave foránea. Así no hay datos repetidos ni inconsistentes.
-- Las relaciones *muchos a muchos* (una venta con varios modelos) se resuelven
-  con tablas puente: **detalle_ventas** y **detalle_facturas**.
-- **Excepción a propósito:** `detalle_facturas` guarda la descripción y el
-  precio del producto tal como estaban al emitir la factura. En facturación eso
-  es correcto: la factura es un documento histórico y no debe cambiar si el
-  producto se renombra o sube de precio después.
+- Relación **1:N**: una conversación del chatbot tiene muchos mensajes
+  (`mensajes.conversacion_id → conversaciones`).
 
 ## Usuarios de ejemplo (ya vienen en el esquema)
 

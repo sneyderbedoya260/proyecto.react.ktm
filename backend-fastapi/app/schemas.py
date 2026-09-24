@@ -70,6 +70,9 @@ class UsuarioListado(BaseModel):
     id: int
     nombre: str
     apellido: str
+    tipo_documento: str = ""
+    numero_documento: str = ""
+    direccion: str = ""
     correo: str
     telefono: str
     estado: str
@@ -117,6 +120,19 @@ class UsuarioCrearIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=20)
     rol_id: int = Field(ge=1, le=3)  # 1 Administrador, 2 Empleado, 3 Cliente
+
+
+class UsuarioEditarIn(BaseModel):
+    nombre: str
+    apellido: str
+    tipoDocumento: str
+    numeroDocumento: str
+    direccion: str
+    telefono: str
+    email: EmailStr
+    rol_id: int = Field(ge=1, le=3)
+    # Opcional: si viene vacío/None, no se cambia la contraseña.
+    password: Optional[str] = Field(default=None, min_length=8, max_length=20)
 
 
 class UsuarioEstadoIn(BaseModel):

@@ -1,8 +1,8 @@
 """Pruebas automatizadas (Pytest + TestClient) del backend FastAPI.
 
 Cubren el CRUD de productos, la autenticación con JWT, la seguridad por roles,
-el flujo de ventas/facturas/reportes, los dashboards, el chatbot y el límite de
-intentos. Se ejecutan contra una base SQLite en memoria (no toca producción):
+los dashboards, la gestión de usuarios, las PQR, el chatbot y el límite
+de intentos. Se ejecutan contra una base SQLite en memoria (no toca producción):
 
     cd backend-fastapi
     venv/Scripts/python -m pytest -v
@@ -265,3 +265,29 @@ def test_flujo_pqr_completo():
 
     # El cliente NO puede responder PQR (solo staff).
     assert client.put(f"/api/pqr/{pid}", json={"estado": "Cerrada"}, headers=hc).status_code == 403
+
+
+def test_admin_edita_usuario():
+    h = _headers("admin@ktm.com", "Admin1234")
+    # Crear un usuario para editar.
+    r = client.post("/api/usuarios", json={
+        "nombre": "Pedro", "apellido": "Lopez", "tipoDocumento": "CC",
+        "numeroDocumento": "44443333", "direccion": "Calle 3", "telefono": "3001112233",
+        "email": "pedro@ktm.com", "password": "Pedro12345", "rol_id": 3,
+    }, headers=h)
+    assert r.status_code == 201, r.text
+    uid = None
+    for u in client.get("/api/usuarios", headers=h).json():
+        if u["correo"] == "pedro@ktm.com":
+            uid = u["id"]
+    assert uid is not None
+    # Editar: cambiar nombre, teléfono y rol (Cliente -> Empleado), sin contraseña.
+    r = client.put(f"/api/usuarios/{uid}", json={
+        "nombre": "Pedro Andres", "apellido": "Lopez", "tipoDocumento": "CC",
+        "numeroDocumento": "44443333", "direccion": "Calle 3", "telefono": "3009998877",
+        "email": "pedro@ktm.com", "rol_id": 2,
+    }, headers=h)
+    assert r.status_code == 200, r.text
+    assert r.json()["nombre"] == "Pedro Andres"
+    assert r.json()["rol"] == "Empleado"
+    assert r.json()["telefono"] == "3009998877"

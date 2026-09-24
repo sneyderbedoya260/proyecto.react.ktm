@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.dependencies import requerir_rol
 from app.models import Rol, Usuario
-from app.schemas import MensajeOut, RolOut, UsuarioCrearIn, UsuarioEstadoIn, UsuarioListado
+from app.schemas import MensajeOut, RolOut, UsuarioCrearIn, UsuarioEditarIn, UsuarioEstadoIn, UsuarioListado
 from app.security import hash_password
 
 router = APIRouter(prefix="/api/usuarios", tags=["Usuarios"])
@@ -17,6 +17,9 @@ def _serializar(u: Usuario) -> dict:
         "id": u.id,
         "nombre": u.nombre,
         "apellido": u.apellido,
+        "tipo_documento": u.tipo_documento,
+        "numero_documento": u.numero_documento,
+        "direccion": u.direccion,
         "correo": u.correo,
         "telefono": u.telefono,
         "estado": u.estado,
@@ -67,6 +70,49 @@ def crear_usuario(
         rol_id=datos.rol_id,
     )
     db.add(usuario)
+    db.commit()
+    db.refresh(usuario)
+    return _serializar(usuario)
+
+
+@router.put("/{usuario_id}", response_model=UsuarioListado)
+def editar_usuario(
+    usuario_id: int,
+    datos: UsuarioEditarIn,
+    db: Session = Depends(get_db),
+    _usuario: dict = Depends(requerir_rol("Administrador")),
+):
+    """El administrador edita los datos de un usuario y su rol."""
+    usuario = db.get(Usuario, usuario_id)
+    if not usuario:
+        raise HTTPException(status_code=404, detail={"mensaje": "Usuario no encontrado."})
+
+    # El correo y el documento deben seguir siendo únicos (salvo los del propio usuario).
+    choque_correo = (
+        db.query(Usuario).filter(Usuario.correo == datos.email, Usuario.id != usuario_id).first()
+    )
+    if choque_correo:
+        raise HTTPException(status_code=409, detail={"mensaje": "Este correo ya está registrado."})
+    choque_doc = (
+        db.query(Usuario)
+        .filter(Usuario.numero_documento == datos.numeroDocumento, Usuario.id != usuario_id)
+        .first()
+    )
+    if choque_doc:
+        raise HTTPException(status_code=409, detail={"mensaje": "Este número de documento ya está registrado."})
+    if not db.get(Rol, datos.rol_id):
+        raise HTTPException(status_code=400, detail={"mensaje": "Rol inválido."})
+
+    usuario.nombre = datos.nombre
+    usuario.apellido = datos.apellido
+    usuario.tipo_documento = datos.tipoDocumento
+    usuario.numero_documento = datos.numeroDocumento
+    usuario.direccion = datos.direccion
+    usuario.telefono = datos.telefono
+    usuario.correo = datos.email
+    usuario.rol_id = datos.rol_id
+    if datos.password:
+        usuario.password_hash = hash_password(datos.password)
     db.commit()
     db.refresh(usuario)
     return _serializar(usuario)

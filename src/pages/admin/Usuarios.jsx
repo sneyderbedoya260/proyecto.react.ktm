@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { listarUsuarios, listarRoles, crearUsuario, cambiarEstadoUsuario } from '../../services/usuarioService';
+import { listarUsuarios, listarRoles, crearUsuario, editarUsuario, cambiarEstadoUsuario } from '../../services/usuarioService';
 
 const inp = 'rounded border border-neutral-600 bg-black/40 px-3 py-2';
 const formularioVacio = {
@@ -11,6 +11,7 @@ function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [formulario, setFormulario] = useState(formularioVacio);
+  const [editandoId, setEditandoId] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState('');
@@ -36,14 +37,35 @@ function AdminUsuarios() {
     setFormulario((a) => ({ ...a, [name]: name === 'rol_id' ? Number(value) : value }));
   };
 
+  const iniciarEdicion = (u) => {
+    const rol = roles.find((r) => r.nombre === u.rol);
+    setEditandoId(u.id);
+    setFormulario({
+      nombre: u.nombre, apellido: u.apellido, tipoDocumento: u.tipo_documento || 'CC',
+      numeroDocumento: u.numero_documento || '', direccion: u.direccion || '',
+      telefono: u.telefono || '', email: u.correo, password: '', rol_id: rol ? rol.id : 3,
+    });
+    setMensaje(''); setError('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelarEdicion = () => { setEditandoId(null); setFormulario(formularioVacio); };
+
   const enviar = async (e) => {
     e.preventDefault();
     setMensaje(''); setError('');
     setEnviando(true);
     try {
-      await crearUsuario(formulario);
-      setMensaje(`Usuario "${formulario.nombre}" creado correctamente.`);
-      setFormulario(formularioVacio);
+      if (editandoId) {
+        const datos = { ...formulario };
+        if (!datos.password) delete datos.password; // no cambiar contraseña si va vacía
+        await editarUsuario(editandoId, datos);
+        setMensaje(`Usuario "${formulario.nombre}" actualizado.`);
+      } else {
+        await crearUsuario(formulario);
+        setMensaje(`Usuario "${formulario.nombre}" creado correctamente.`);
+      }
+      cancelarEdicion();
       cargar();
     } catch (err) {
       setError(err.message);
@@ -53,9 +75,8 @@ function AdminUsuarios() {
   };
 
   const alternarEstado = async (u) => {
-    const nuevo = u.estado === 'Activo' ? 'Inactivo' : 'Activo';
     try {
-      await cambiarEstadoUsuario(u.id, nuevo);
+      await cambiarEstadoUsuario(u.id, u.estado === 'Activo' ? 'Inactivo' : 'Activo');
       cargar();
     } catch (err) {
       setError(err.message);
@@ -66,13 +87,13 @@ function AdminUsuarios() {
     <div className="mx-auto max-w-5xl text-white">
       <p className="mb-1 text-xs font-extrabold uppercase tracking-[2px] text-[var(--ktm-orange)]">Administración</p>
       <h1 className="m-0 text-3xl font-extrabold uppercase">Usuarios</h1>
-      <p className="mt-2 text-neutral-300">Crea usuarios y asígnales su rol (Administrador, Empleado o Cliente).</p>
+      <p className="mt-2 text-neutral-300">Crea y edita usuarios, asignándoles su rol (Administrador, Empleado o Cliente).</p>
 
       {mensaje && <p className="mt-5 border-l-4 border-green-500 bg-[var(--ktm-gray)] px-4 py-3 text-sm">{mensaje}</p>}
       {error && <p className="mt-5 border-l-4 border-red-500 bg-[var(--ktm-gray)] px-4 py-3 text-sm text-red-300">{error}</p>}
 
       <form onSubmit={enviar} className="mt-6 grid gap-4 rounded-lg border-t-4 border-[var(--ktm-orange)] bg-[var(--ktm-gray)] p-6 sm:grid-cols-2">
-        <h2 className="sm:col-span-2 m-0 text-xl font-bold">Nuevo usuario</h2>
+        <h2 className="sm:col-span-2 m-0 text-xl font-bold">{editandoId ? `Editando usuario #${editandoId}` : 'Nuevo usuario'}</h2>
         <label className="grid gap-1 text-sm">Nombre<input className={inp} name="nombre" value={formulario.nombre} onChange={actualizarCampo} required /></label>
         <label className="grid gap-1 text-sm">Apellido<input className={inp} name="apellido" value={formulario.apellido} onChange={actualizarCampo} required /></label>
         <label className="grid gap-1 text-sm">Tipo de documento
@@ -84,26 +105,30 @@ function AdminUsuarios() {
         <label className="grid gap-1 text-sm">Correo<input className={inp} type="email" name="email" value={formulario.email} onChange={actualizarCampo} required /></label>
         <label className="grid gap-1 text-sm">Teléfono<input className={inp} name="telefono" value={formulario.telefono} onChange={actualizarCampo} required /></label>
         <label className="grid gap-1 text-sm sm:col-span-2">Dirección<input className={inp} name="direccion" value={formulario.direccion} onChange={actualizarCampo} required /></label>
-        <label className="grid gap-1 text-sm">Contraseña<input className={inp} type="password" name="password" value={formulario.password} onChange={actualizarCampo} placeholder="Mínimo 8 caracteres" required /></label>
+        <label className="grid gap-1 text-sm">Contraseña
+          <input className={inp} type="password" name="password" value={formulario.password} onChange={actualizarCampo}
+            placeholder={editandoId ? 'Dejar en blanco para no cambiarla' : 'Mínimo 8 caracteres'} required={!editandoId} />
+        </label>
         <label className="grid gap-1 text-sm">Rol
           <select className={inp} name="rol_id" value={formulario.rol_id} onChange={actualizarCampo}>
             {roles.map((r) => <option key={r.id} value={r.id}>{r.nombre}</option>)}
           </select>
         </label>
-        <div className="sm:col-span-2">
+        <div className="flex items-end gap-3 sm:col-span-2">
           <button className="rounded bg-[var(--ktm-orange)] px-5 py-2.5 font-extrabold uppercase text-black transition hover:bg-[var(--ktm-orange-dark)] disabled:opacity-60" type="submit" disabled={enviando}>
-            {enviando ? 'Creando...' : 'Crear usuario'}
+            {enviando ? 'Guardando...' : editandoId ? 'Guardar cambios' : 'Crear usuario'}
           </button>
+          {editandoId && <button className="rounded border border-neutral-500 px-5 py-2.5 font-bold uppercase text-neutral-200" type="button" onClick={cancelarEdicion}>Cancelar</button>}
         </div>
       </form>
 
       <h2 className="mt-10 text-xl font-bold">Usuarios registrados</h2>
       {cargando ? <p className="mt-4 text-neutral-300">Cargando...</p> : (
         <div className="mt-4 overflow-x-auto rounded-lg border border-neutral-700">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
             <thead>
               <tr className="bg-[var(--ktm-gray)] text-neutral-300">
-                <th className="p-3">Nombre</th><th className="p-3">Correo</th><th className="p-3">Teléfono</th><th className="p-3">Rol</th><th className="p-3">Estado</th><th className="p-3">Acción</th>
+                <th className="p-3">Nombre</th><th className="p-3">Correo</th><th className="p-3">Teléfono</th><th className="p-3">Rol</th><th className="p-3">Estado</th><th className="p-3">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -115,9 +140,12 @@ function AdminUsuarios() {
                   <td className="p-3 text-neutral-300">{u.rol}</td>
                   <td className="p-3"><span className={u.estado === 'Activo' ? 'text-green-400' : 'text-red-400'}>{u.estado}</span></td>
                   <td className="p-3">
-                    <button className="rounded border border-neutral-500 px-3 py-1 text-xs font-bold uppercase text-neutral-200 hover:border-[var(--ktm-orange)] hover:text-[var(--ktm-orange)]" onClick={() => alternarEstado(u)} type="button">
-                      {u.estado === 'Activo' ? 'Desactivar' : 'Activar'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button className="rounded border border-[var(--ktm-orange)] px-3 py-1 text-xs font-bold uppercase text-[var(--ktm-orange)]" onClick={() => iniciarEdicion(u)} type="button">Editar</button>
+                      <button className="rounded border border-neutral-500 px-3 py-1 text-xs font-bold uppercase text-neutral-200 hover:border-[var(--ktm-orange)] hover:text-[var(--ktm-orange)]" onClick={() => alternarEstado(u)} type="button">
+                        {u.estado === 'Activo' ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

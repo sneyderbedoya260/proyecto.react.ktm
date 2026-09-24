@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -89,7 +89,12 @@ def iniciar_sesion(datos: LoginIn, request: Request, db: Session = Depends(get_d
 
 
 @router.post("/recover-password", response_model=MensajeOut)
-def recuperar_password(datos: RecuperarIn, request: Request, db: Session = Depends(get_db)):
+def recuperar_password(
+    datos: RecuperarIn,
+    request: Request,
+    tareas: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     # Limitar por IP evita que se use este endpoint para inundar de correos a un
     # tercero o para sondear qué correos existen.
     exigir_limite(
@@ -105,7 +110,10 @@ def recuperar_password(datos: RecuperarIn, request: Request, db: Session = Depen
             db.commit()
 
             enlace = f"{settings.frontend_url_principal}/restablecer-contrasena?token={token}"
-            enviar_correo_recuperacion(datos.email, enlace)
+            # BackgroundTasks: el correo se envía después de responder, para que
+            # el usuario no espere a que termine la conexión SMTP (tarea no
+            # bloqueante).
+            tareas.add_task(enviar_correo_recuperacion, datos.email, enlace)
 
         return {"mensaje": "Si el correo existe, recibirás instrucciones de recuperación."}
     except Exception as error:  # noqa: BLE001

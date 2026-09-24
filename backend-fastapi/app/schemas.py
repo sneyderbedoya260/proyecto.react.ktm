@@ -209,3 +209,80 @@ class ReporteDiarioOut(BaseModel):
     total_unidades: int
     total_recaudado: Decimal
     ventas: List[ReporteVentaItem]
+
+
+# --------------------------------------------------------------------------- #
+# GESTIÓN DE USUARIOS (panel de administración)
+# --------------------------------------------------------------------------- #
+class UsuarioCrearIn(BaseModel):
+    nombre: str
+    apellido: str
+    tipoDocumento: str
+    numeroDocumento: str
+    direccion: str
+    telefono: str
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=20)
+    rol_id: int = Field(ge=1, le=3)  # 1 Administrador, 2 Empleado, 3 Cliente
+
+
+class UsuarioEstadoIn(BaseModel):
+    estado: str
+
+    @field_validator("estado")
+    @classmethod
+    def validar_estado(cls, v):
+        if v not in {"Activo", "Inactivo"}:
+            raise ValueError("Estado inválido. Debe ser 'Activo' o 'Inactivo'.")
+        return v
+
+
+class RolOut(BaseModel):
+    id: int
+    nombre: str
+
+    model_config = {"from_attributes": True}
+
+
+# --------------------------------------------------------------------------- #
+# PQR  (Peticiones, Quejas y Reclamos)  — REQ-16
+# --------------------------------------------------------------------------- #
+class PQRCreateIn(BaseModel):
+    tipo: str
+    asunto: str = Field(min_length=3, max_length=150)
+    mensaje: str = Field(min_length=5)
+
+    @field_validator("tipo")
+    @classmethod
+    def validar_tipo(cls, v):
+        if v not in {"Peticion", "Queja", "Reclamo"}:
+            raise ValueError("Tipo inválido. Debe ser Peticion, Queja o Reclamo.")
+        return v
+
+
+class PQRRespuestaIn(BaseModel):
+    estado: str
+    respuesta: Optional[str] = None
+
+    @field_validator("estado")
+    @classmethod
+    def validar_estado(cls, v):
+        permitidos = {"Pendiente", "En proceso", "Respondida", "Cerrada"}
+        if v not in permitidos:
+            raise ValueError(f"Estado inválido. Debe ser uno de: {', '.join(permitidos)}")
+        return v
+
+
+class PQROut(BaseModel):
+    id: int
+    cliente_id: int
+    cliente_nombre: Optional[str] = None
+    tipo: str
+    asunto: str
+    mensaje: str
+    estado: str
+    respuesta: Optional[str] = None
+    creado_en: datetime
+    actualizado_en: datetime
+
+    model_config = {"from_attributes": True}

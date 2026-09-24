@@ -244,3 +244,59 @@ def test_limite_de_intentos_login():
                         headers={"X-Forwarded-For": "9.9.9.9"})
         codigos.append(r.status_code)
     assert 429 in codigos, f"nunca se activó el límite: {codigos}"
+
+
+# --------------------------------------------------------------------------- #
+# Gestión de usuarios (admin crea usuarios con rol)
+# --------------------------------------------------------------------------- #
+def test_admin_crea_usuario_con_rol():
+    h = _headers("admin@ktm.com", "Admin1234")
+    r = client.post("/api/usuarios", json={
+        "nombre": "Empleado", "apellido": "Nuevo", "tipoDocumento": "CC",
+        "numeroDocumento": "555666777", "direccion": "Calle 9", "telefono": "3009998877",
+        "email": "empleado@ktm.com", "password": "Empleado123", "rol_id": 2,
+    }, headers=h)
+    assert r.status_code == 201, r.text
+    assert r.json()["rol"] == "Empleado"
+    # El nuevo empleado puede iniciar sesión.
+    assert client.post("/api/auth/login", json={"email": "empleado@ktm.com", "password": "Empleado123"}).status_code == 200
+
+
+def test_listar_usuarios_solo_admin():
+    assert client.get("/api/usuarios", headers=_headers("admin@ktm.com", "Admin1234")).status_code == 200
+    # Un cliente no puede listar usuarios.
+    assert client.get("/api/usuarios", headers=_headers("cliente@test.com", "Cliente123")).status_code == 403
+
+
+def test_listar_roles():
+    r = client.get("/api/usuarios/roles", headers=_headers("admin@ktm.com", "Admin1234"))
+    assert r.status_code == 200
+    assert {x["nombre"] for x in r.json()} == {"Administrador", "Empleado", "Cliente"}
+
+
+# --------------------------------------------------------------------------- #
+# Módulo PQR (REQ-16)
+# --------------------------------------------------------------------------- #
+def test_flujo_pqr_completo():
+    hc = _headers("cliente@test.com", "Cliente123")
+    ha = _headers("admin@ktm.com", "Admin1234")
+
+    # El cliente crea una PQR.
+    r = client.post("/api/pqr", json={"tipo": "Queja", "asunto": "Demora en respuesta",
+                                      "mensaje": "No me respondieron a tiempo."}, headers=hc)
+    assert r.status_code == 201, r.text
+    pid = r.json()["id"]
+    assert r.json()["estado"] == "Pendiente"
+
+    # El cliente ve su PQR; el staff la ve también.
+    assert any(p["id"] == pid for p in client.get("/api/pqr", headers=hc).json())
+    assert any(p["id"] == pid for p in client.get("/api/pqr", headers=ha).json())
+
+    # El staff responde y cambia el estado.
+    r = client.put(f"/api/pqr/{pid}", json={"estado": "Respondida", "respuesta": "Resuelto."}, headers=ha)
+    assert r.status_code == 200
+    assert r.json()["estado"] == "Respondida"
+    assert r.json()["respuesta"] == "Resuelto."
+
+    # El cliente NO puede responder PQR (solo staff).
+    assert client.put(f"/api/pqr/{pid}", json={"estado": "Cerrada"}, headers=hc).status_code == 403

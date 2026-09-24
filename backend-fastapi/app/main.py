@@ -2,7 +2,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, chatbot, dashboard, facturas, imagenes, productos, reportes, ventas
+from app.routers import (
+    auth, chatbot, dashboard, facturas, imagenes, productos,
+    pqr, reportes, usuarios, ventas,
+)
 
 app = FastAPI(
     title="KTM Catálogo — API",
@@ -45,6 +48,8 @@ app.include_router(ventas.router)
 app.include_router(facturas.router)
 app.include_router(reportes.router)
 app.include_router(dashboard.router)
+app.include_router(pqr.router)
+app.include_router(usuarios.router)
 
 
 @app.get("/api/salud", tags=["Salud"])

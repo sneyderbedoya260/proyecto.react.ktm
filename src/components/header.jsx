@@ -39,10 +39,10 @@ function Header() {
           <li><Link to="/quienes-somos">¿Quiénes Somos?</Link></li>
           <li><Link to="/contacto">Contacto</Link></li>
           {usuario && (usuario.rol === 'Administrador' || usuario.rol === 'Empleado') && (
-            <li><Link to="/dashboard">Dashboard</Link></li>
-          )}
-          {usuario && (usuario.rol === 'Administrador' || usuario.rol === 'Empleado') && (
             <li><Link to="/admin">Panel Admin</Link></li>
+          )}
+          {usuario && usuario.rol === 'Cliente' && (
+            <li><Link to="/pqr">PQR</Link></li>
           )}
           {usuario ? (
             <li><button type="button" onClick={cerrarSesion}>Cerrar sesión</button></li>

@@ -16,9 +16,6 @@ import Pqr from './pages/pqr';
 import Dashboard from './pages/dashboard';
 import AdminProductos from './pages/admin/Productos';
 import AdminUsuarios from './pages/admin/Usuarios';
-import AdminVentas from './pages/admin/Ventas';
-import AdminFacturas from './pages/admin/Facturas';
-import AdminReportes from './pages/admin/Reportes';
 import AdminPqr from './pages/admin/PqrAdmin';
 import './App.css';
 
@@ -37,7 +34,7 @@ function App() {
   const esAdmin = pathname.startsWith('/admin');
 
   return (
-    <div className="App">
+    <div className={`App ${esAdmin ? 'App--admin' : ''}`}>
       {!esAdmin && <Header />}
       <ScrollToTop />
 
@@ -56,9 +53,6 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="productos" element={<AdminProductos />} />
-          <Route path="ventas" element={<AdminVentas />} />
-          <Route path="facturas" element={<AdminFacturas />} />
-          <Route path="reportes" element={<AdminReportes />} />
           <Route path="pqr" element={<AdminPqr />} />
           <Route path="usuarios" element={<AdminUsuarios />} />
         </Route>

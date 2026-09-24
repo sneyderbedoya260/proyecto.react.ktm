@@ -32,23 +32,6 @@ def listar_roles(
     return db.query(Rol).order_by(Rol.id).all()
 
 
-@router.get("/clientes", response_model=List[UsuarioListado])
-def listar_clientes(
-    db: Session = Depends(get_db),
-    _usuario: dict = Depends(requerir_rol("Administrador", "Empleado")),
-):
-    """Solo los clientes (para el selector al registrar una venta)."""
-    clientes = (
-        db.query(Usuario)
-        .options(joinedload(Usuario.rol))
-        .join(Rol)
-        .filter(Rol.nombre == "Cliente")
-        .order_by(Usuario.nombre)
-        .all()
-    )
-    return [_serializar(u) for u in clientes]
-
-
 @router.get("", response_model=List[UsuarioListado])
 def listar_usuarios(
     db: Session = Depends(get_db),

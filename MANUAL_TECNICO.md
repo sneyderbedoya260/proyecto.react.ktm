@@ -54,8 +54,8 @@ carrusel-jostin/
 │   │   ├── security.py       # bcrypt + JWT
 │   │   ├── dependencies.py   # obtener_usuario_actual, requerir_rol
 │   │   ├── rate_limit.py     # Límite de intentos (anti fuerza bruta)
-│   │   └── routers/          # auth, productos, ventas, facturas, reportes,
-│   │                         #   dashboard, imagenes, chatbot
+│   │   └── routers/          # auth, productos, dashboard, imagenes,
+│   │                         #   chatbot, pqr, usuarios
 │   ├── db/                   # schema_neon.sql, schema_mysql.sql, guía phpMyAdmin
 │   ├── postman/              # Colección de pruebas Postman
 │   ├── test_api.py           # Pruebas Pytest + TestClient
@@ -128,14 +128,14 @@ venv\Scripts\python -m pytest test_api.py -v
 
 Cubren: salud, registro y login JWT, credenciales incorrectas, protección de
 endpoints, CRUD completo de productos, seguridad por roles (cliente → 403),
-flujo venta→factura→reportes (PDF/Excel), dashboards y límite de intentos.
-**Resultado: 16 pruebas OK.**
+dashboard, gestión de usuarios, PQR y límite de intentos.
+**Resultado: 18 pruebas OK.**
 
 ### 5.2 Manuales (Postman)
 
 Importa `backend-fastapi/postman/KTM_Catalogo.postman_collection.json`, ejecuta
 primero **Auth → Login** (guarda el token solo) y luego el resto de peticiones
-(GET, POST, PUT, DELETE) sobre ventas, facturas, reportes, dashboard y chatbot.
+(GET, POST, PUT, DELETE) sobre productos, dashboard, PQR, usuarios y chatbot.
 
 ## 6. Endpoints principales
 
@@ -144,10 +144,9 @@ primero **Auth → Login** (guarda el token solo) y luego el resto de peticiones
 | POST | `/api/auth/register` · `/login` · `/recover-password` · `/reset-password` | Autenticación |
 | GET/POST/PUT/DELETE | `/api/productos` | CRUD de productos |
 | POST | `/api/productos/upload` | Subida de imagen |
-| POST/GET/PUT | `/api/ventas` · `/api/ventas/{id}` · `/api/ventas/{id}/estado` | Ventas y detalle |
-| POST/GET | `/api/facturas/generar/{id}` · `/api/facturas` · `/api/facturas/{id}/descargar` | Facturas |
-| GET | `/api/reportes/ventas-diario[/pdf|/excel]` | Reporte diario JSON/PDF/Excel |
 | GET | `/api/dashboard/resumen` · `/filtros` · `/catalogo` | Dashboard (rol Admin/Empleado) |
+| POST/GET/PUT | `/api/pqr` · `/api/pqr/{id}` | PQR (cliente crea/consulta; staff responde) |
+| GET/POST/PUT | `/api/usuarios` · `/api/usuarios/roles` · `/api/usuarios/{id}/estado` | Gestión de usuarios y roles (Admin) |
 | POST | `/api/chatbot` | Chatbot con IA (Gemini) |
 | GET | `/api/salud` | Estado del servicio |
 
@@ -204,15 +203,15 @@ para una API de catálogo con integración de IA. DRF habría aportado el panel
 de administración de Django, pero a costa de más peso y una configuración
 menos alineada con el despliegue serverless usado.
 
-## 11. Estado de cumplimiento y pendientes
+## 11. Alcance y estado de cumplimiento
 
-Ver el archivo de la lista de chequeo para el detalle por requerimiento. En
-resumen, el **backend está completo y probado** para ventas, facturas,
-reportes, dashboard, seguridad, IA y despliegue. Queda pendiente, para una
-siguiente iteración:
+El proyecto se define como un **catálogo de consulta de motos KTM**, no una
+tienda. Por decisión del proyecto se retiró el módulo de ventas y facturación
+(REQ-01 a REQ-09 y REQ-11 de la rúbrica): el sitio no registra ventas ni genera
+facturas, y esas tablas se retiraron de la base en vivo.
 
-- **Módulo PQR (REQ-16):** la tabla existe; faltan endpoints e interfaz.
-- **Interfaz React** para ventas/facturas/reportes (hoy son solo API).
-- **Dashboard de ventas (REQ-11):** la infraestructura de gráficos existe, pero
-  actualmente muestra datos del catálogo (el sitio se reenfocó como catálogo de
-  consulta, no tienda). Reactivar la vista de ventas si el criterio lo exige.
+**Implementado y probado:** catálogo y CRUD de productos, autenticación JWT con
+seguridad por roles, dashboard de catálogo, módulo de PQR (cliente y staff),
+gestión de usuarios con roles, chatbot con IA (Gemini), seguridad integral
+(bcrypt, rate-limiting, CORS, cabeceras, anti-enumeración) y despliegue en la
+nube. Ver la lista de chequeo para el detalle por requerimiento.

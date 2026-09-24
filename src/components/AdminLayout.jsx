@@ -7,9 +7,6 @@ import './adminLayout.css';
 const ENLACES = [
   { to: '/admin', label: 'Dashboard', icon: '📊', end: true },
   { to: '/admin/productos', label: 'Productos', icon: '🏍️' },
-  { to: '/admin/ventas', label: 'Ventas', icon: '🧾' },
-  { to: '/admin/facturas', label: 'Facturas', icon: '📄' },
-  { to: '/admin/reportes', label: 'Reportes', icon: '📈' },
   { to: '/admin/pqr', label: 'PQR', icon: '💬' },
   { to: '/admin/usuarios', label: 'Usuarios', icon: '👥', soloAdmin: true },
 ];

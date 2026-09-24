@@ -1,21 +1,34 @@
 {
   "info": {
     "name": "KTM Catálogo — API (Quinto Avance)",
-    "description": "Colección de pruebas de los endpoints REST del backend FastAPI (ventas, facturas, reportes, dashboard, chatbot IA y autenticación).\n\nUso:\n1. Selecciona el entorno o edita la variable `base_url`.\n2. Ejecuta 'Auth > Login (admin)': guarda el token automáticamente en `{{token}}`.\n3. Ya puedes ejecutar el resto de peticiones protegidas.\n\nbase_url por defecto: https://ktm-catalogo-api.vercel.app  (cámbiala a http://localhost:8000 para local)",
+    "description": "Colección de pruebas de los endpoints REST del backend FastAPI (productos, dashboard, PQR, usuarios, chatbot IA y autenticación).\n\nUso:\n1. Edita la variable base_url si hace falta.\n2. Ejecuta 'Auth > Login (admin)': guarda el token automáticamente en {{token}}.\n3. Ejecuta el resto de peticiones protegidas.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "https://ktm-catalogo-api.vercel.app" },
-    { "key": "token", "value": "" },
-    { "key": "venta_id", "value": "1" },
-    { "key": "factura_id", "value": "1" },
-    { "key": "producto_id", "value": "1" }
+    {
+      "key": "base_url",
+      "value": "https://ktm-catalogo-api.vercel.app"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "producto_id",
+      "value": "1"
+    }
   ],
   "item": [
     {
       "name": "Salud",
       "item": [
-        { "name": "GET /api/salud", "request": { "method": "GET", "url": "{{base_url}}/api/salud" } }
+        {
+          "name": "GET /api/salud",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/salud"
+          }
+        }
       ]
     },
     {
@@ -25,9 +38,17 @@
           "name": "POST Registrar cliente",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/api/auth/register",
-            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Juan\",\n  \"apellido\": \"Perez\",\n  \"tipoDocumento\": \"CC\",\n  \"numeroDocumento\": \"123456789\",\n  \"direccion\": \"Calle 1\",\n  \"telefono\": \"3001234567\",\n  \"email\": \"nuevo@correo.com\",\n  \"password\": \"Cliente123\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan\",\n  \"apellido\": \"Perez\",\n  \"tipoDocumento\": \"CC\",\n  \"numeroDocumento\": \"123456789\",\n  \"direccion\": \"Calle 1\",\n  \"telefono\": \"3001234567\",\n  \"email\": \"nuevo@correo.com\",\n  \"password\": \"Cliente123\"\n}"
+            }
           }
         },
         {
@@ -46,18 +67,34 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/api/auth/login",
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@ktm.com\",\n  \"password\": \"CAMBIA_ESTA_CLAVE\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@ktm.com\",\n  \"password\": \"CAMBIA_ESTA_CLAVE\"\n}"
+            }
           }
         },
         {
           "name": "POST Recuperar contraseña",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/api/auth/recover-password",
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@ktm.com\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@ktm.com\"\n}"
+            }
           }
         }
       ]
@@ -65,83 +102,231 @@
     {
       "name": "Productos (CRUD)",
       "item": [
-        { "name": "GET Listar productos", "request": { "method": "GET", "url": "{{base_url}}/api/productos" } },
-        { "name": "GET Consultar producto", "request": { "method": "GET", "url": "{{base_url}}/api/productos/{{producto_id}}" } },
+        {
+          "name": "GET Listar productos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/productos"
+          }
+        },
+        {
+          "name": "GET Consultar producto",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/productos/{{producto_id}}"
+          }
+        },
         {
           "name": "POST Crear producto",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{base_url}}/api/productos",
-            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"KTM 890 Adventure\",\n  \"descripcion\": \"Trail media\",\n  \"detalle\": \"Detalle completo\",\n  \"categoria\": \"adventure\",\n  \"imagen_url\": \"/images/moto4.jpg\",\n  \"precio\": 79000000,\n  \"estado\": \"Disponible\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"KTM 890 Adventure\",\n  \"descripcion\": \"Trail media\",\n  \"detalle\": \"Detalle completo\",\n  \"categoria\": \"adventure\",\n  \"imagen_url\": \"/images/moto4.jpg\",\n  \"precio\": 79000000,\n  \"estado\": \"Disponible\"\n}"
+            }
           }
         },
         {
           "name": "PUT Actualizar producto",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{base_url}}/api/productos/{{producto_id}}",
-            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"KTM 890 Adventure R\",\n  \"descripcion\": \"Trail media\",\n  \"detalle\": \"Detalle completo\",\n  \"categoria\": \"adventure\",\n  \"imagen_url\": \"/images/moto4.jpg\",\n  \"precio\": 82000000,\n  \"estado\": \"Disponible\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"KTM 890 Adventure R\",\n  \"descripcion\": \"Trail media\",\n  \"detalle\": \"Detalle completo\",\n  \"categoria\": \"adventure\",\n  \"imagen_url\": \"/images/moto4.jpg\",\n  \"precio\": 82000000,\n  \"estado\": \"Disponible\"\n}"
+            }
           }
         },
         {
           "name": "DELETE Eliminar producto",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{base_url}}/api/productos/{{producto_id}}"
           }
         }
       ]
     },
     {
-      "name": "Ventas",
+      "name": "Dashboard",
       "item": [
         {
-          "name": "POST Crear venta",
+          "name": "GET Resumen (cards)",
           "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": "{{base_url}}/api/ventas",
-            "body": { "mode": "raw", "raw": "{\n  \"items\": [ { \"producto_id\": 1, \"cantidad\": 2 } ],\n  \"descuento\": 0,\n  \"notas\": \"Interesado en financiación\"\n}" }
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/dashboard/resumen"
           }
         },
-        { "name": "GET Historial de ventas (filtros)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/ventas?estado=Pendiente" } },
-        { "name": "GET Detalle de una venta", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/ventas/{{venta_id}}" } },
         {
-          "name": "PUT Cambiar estado de venta",
+          "name": "GET Filtros",
           "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": "{{base_url}}/api/ventas/{{venta_id}}/estado",
-            "body": { "mode": "raw", "raw": "{ \"estado\": \"Confirmado\" }" }
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/dashboard/filtros"
+          }
+        },
+        {
+          "name": "GET Catálogo (gráficos)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/dashboard/catalogo?agrupacion=dia"
           }
         }
       ]
     },
     {
-      "name": "Facturas",
+      "name": "PQR",
       "item": [
-        { "name": "POST Generar factura desde venta", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/facturas/generar/{{venta_id}}" } },
-        { "name": "GET Consultar facturas", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/facturas" } },
-        { "name": "GET Descargar factura (PDF)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/facturas/{{factura_id}}/descargar" } }
+        {
+          "name": "POST Crear PQR (cliente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/pqr",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"Queja\",\n  \"asunto\": \"Demora\",\n  \"mensaje\": \"Detalle de la queja\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Listar PQR",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/pqr"
+          }
+        },
+        {
+          "name": "PUT Responder PQR (staff)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/pqr/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"Respondida\",\n  \"respuesta\": \"Resuelto\"\n}"
+            }
+          }
+        }
       ]
     },
     {
-      "name": "Reportes",
+      "name": "Usuarios",
       "item": [
-        { "name": "GET Reporte diario (JSON)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/reportes/ventas-diario?fecha=2026-09-24" } },
-        { "name": "GET Reporte diario (PDF)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/reportes/ventas-diario/pdf?fecha=2026-09-24" } },
-        { "name": "GET Reporte diario (Excel)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/reportes/ventas-diario/excel?fecha=2026-09-24" } }
-      ]
-    },
-    {
-      "name": "Dashboard",
-      "item": [
-        { "name": "GET Resumen (cards)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/dashboard/resumen" } },
-        { "name": "GET Filtros", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/dashboard/filtros" } },
-        { "name": "GET Catálogo (gráficos)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{base_url}}/api/dashboard/catalogo?agrupacion=dia" } }
+        {
+          "name": "GET Listar usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/usuarios"
+          }
+        },
+        {
+          "name": "GET Listar roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/usuarios/roles"
+          }
+        },
+        {
+          "name": "POST Crear usuario con rol",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Empleado\",\n  \"apellido\": \"Nuevo\",\n  \"tipoDocumento\": \"CC\",\n  \"numeroDocumento\": \"55566677\",\n  \"direccion\": \"Calle 9\",\n  \"telefono\": \"3009998877\",\n  \"email\": \"empleado@ktm.com\",\n  \"password\": \"Empleado123\",\n  \"rol_id\": 2\n}"
+            }
+          }
+        }
       ]
     },
     {
@@ -151,9 +336,17 @@
           "name": "POST Conversar",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/api/chatbot",
-            "body": { "mode": "raw", "raw": "{\n  \"mensaje\": \"¿Qué motos adventure tienen?\",\n  \"historial\": []\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"¿Qué motos adventure tienen?\",\n  \"historial\": []\n}"
+            }
           }
         }
       ]

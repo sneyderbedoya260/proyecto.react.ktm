@@ -169,41 +169,6 @@ def test_cliente_no_puede_crear_producto():
 
 
 # --------------------------------------------------------------------------- #
-# Ventas, facturas y reportes
-# --------------------------------------------------------------------------- #
-def test_flujo_venta_factura_reportes():
-    hc = _headers("cliente@test.com", "Cliente123")
-    ha = _headers("admin@ktm.com", "Admin1234")
-
-    venta = client.post("/api/ventas", json={"items": [{"producto_id": 1, "cantidad": 2}],
-                                             "notas": "Interesado"}, headers=hc)
-    assert venta.status_code == 201, venta.text
-    vid = venta.json()["id"]
-    assert float(venta.json()["total"]) > 0  # calcula subtotal/impuestos/total
-
-    # El cliente solo ve sus ventas; el admin las ve todas.
-    assert client.get("/api/ventas", headers=hc).status_code == 200
-    assert client.get("/api/ventas", headers=ha).status_code == 200
-
-    factura = client.post(f"/api/facturas/generar/{vid}", headers=ha)
-    assert factura.status_code == 201, factura.text
-    fid = factura.json()["id"]
-
-    pdf = client.get(f"/api/facturas/{fid}/descargar", headers=ha)
-    assert pdf.status_code == 200 and len(pdf.content) > 500  # es un PDF real
-
-    hoy = datetime.date.today().isoformat()
-    assert client.get(f"/api/reportes/ventas-diario?fecha={hoy}", headers=ha).status_code == 200
-    assert len(client.get(f"/api/reportes/ventas-diario/pdf?fecha={hoy}", headers=ha).content) > 500
-    assert len(client.get(f"/api/reportes/ventas-diario/excel?fecha={hoy}", headers=ha).content) > 500
-
-
-def test_cliente_no_puede_generar_factura():
-    hc = _headers("cliente@test.com", "Cliente123")
-    assert client.post("/api/facturas/generar/1", headers=hc).status_code == 403
-
-
-# --------------------------------------------------------------------------- #
 # Dashboards
 # --------------------------------------------------------------------------- #
 def test_dashboard_resumen_y_roles():

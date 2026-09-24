@@ -6,8 +6,17 @@
   padding-top: 184px;
 }
 
+/* El panel admin tiene su propio layout (sidebar de alto completo) y no lleva
+   el header fijo, así que no necesita el espacio superior. */
+.App--admin {
+  padding-top: 0;
+}
+
 @media (max-width: 640px) {
   .App {
     padding-top: 75px;
+  }
+  .App--admin {
+    padding-top: 0;
   }
 }

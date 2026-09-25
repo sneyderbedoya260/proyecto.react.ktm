@@ -1,7 +1,6 @@
 .dashboard {
   max-width: 1180px;
-  margin: 90px auto 60px;
-  padding: 0 20px;
+  margin: 0 auto 40px;
 }
 
 .dashboard-heading {
@@ -202,8 +201,13 @@
   text-align: center;
 }
 
+.dashboard-card strong,
+.dashboard-resumen-periodo strong {
+  font-family: var(--font-display);
+}
+
 @media (max-width: 640px) {
   .dashboard {
-    margin-top: 70px;
+    margin-top: 0;
   }
 }

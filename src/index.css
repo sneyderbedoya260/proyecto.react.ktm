@@ -6,19 +6,66 @@
   --ktm-black: #0D0D0D;
   --ktm-gray: #1A1A1A;
   --ktm-white: #FFFFFF;
+  --font-body: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font-display: "Oswald", "Segoe UI", system-ui, sans-serif;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  font-family: var(--font-body);
   background-color: var(--ktm-black);
   color: var(--ktm-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: 0.01em;
 }
 
 a {
   color: inherit;
+}
+
+/* Los títulos y elementos de marca usan la tipografía display (Oswald):
+   condensada y deportiva, acorde a la identidad KTM. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+/* Selección de texto en color de marca */
+::selection {
+  background: var(--ktm-orange);
+  color: var(--ktm-black);
+}
+
+/* Barra de desplazamiento discreta y acorde al tema oscuro */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 999px;
+  border: 2px solid var(--ktm-black);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #454545;
+}
+
+/* Foco visible accesible y coherente en todo el sitio */
+:focus-visible {
+  outline: 2px solid var(--ktm-orange);
+  outline-offset: 2px;
 }

@@ -3,10 +3,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--ktm-black);
-  padding: 8px 24px;
+  background-color: rgba(13, 13, 13, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 10px 32px;
   color: var(--ktm-white);
-  border-bottom: 3px solid var(--ktm-orange);
+  border-bottom: 1px solid rgba(255, 102, 0, 0.9);
+  box-shadow: 0 6px 24px -12px rgba(0, 0, 0, 0.8);
   left: 0;
   position: fixed;
   right: 0;
@@ -23,10 +26,15 @@
 .header-logo {
   display: flex;
   flex-shrink: 0;
-  height: 92px;
-  width: 92px;
+  height: 64px;
+  width: 64px;
   align-items: center;
   justify-content: center;
+  transition: transform 0.25s ease;
+}
+
+.header-logo:hover {
+  transform: scale(1.05);
 }
 
 .header-logo img {
@@ -39,7 +47,7 @@
 .navbar-menu {
   display: flex;
   list-style: none;
-  gap: 18px;
+  gap: 22px;
   margin: 0;
   padding: 0;
   align-items: center;
@@ -49,16 +57,17 @@
 .navbar-menu button {
   background: none;
   border: 0;
-  color: var(--ktm-white);
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   text-decoration: none;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 500;
   text-transform: uppercase;
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
-  transition: color 0.3s ease;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  transition: color 0.25s ease;
   position: relative;
-  padding-bottom: 4px;
+  padding-bottom: 5px;
 }
 
 .navbar-menu a::after,
@@ -70,7 +79,8 @@
   width: 0;
   height: 2px;
   background-color: var(--ktm-orange);
-  transition: width 0.3s ease;
+  border-radius: 2px;
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .navbar-menu a:hover,
@@ -85,20 +95,21 @@
 
 @media (max-width: 640px) {
   .header {
-    padding: 8px 14px;
+    padding: 8px 16px;
   }
 
   .header-logo {
-    height: 52px;
-    width: 52px;
+    height: 46px;
+    width: 46px;
   }
 
   .navbar-menu {
-    gap: 10px;
+    gap: 12px;
   }
 
   .navbar-menu a,
   .navbar-menu button {
-    font-size: 0.68rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
   }
 }

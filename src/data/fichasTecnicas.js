@@ -10,6 +10,10 @@
 export const FICHAS = {
   'ktm 1390 super adventure': {
     subtitulo: 'Conquista cualquier horizonte',
+    colores: [
+      { nombre: 'Naranja KTM', hex: '#FF6600' },
+      { nombre: 'Negro / Blanco', hex: '#cfd3d8', imagen: '/images/ktm-1390-superadv-blanco.webp' },
+    ],
     descripcion:
       'La gran trail de KTM lleva la aventura de largo recorrido a otro nivel. Su bicilíndrico LC8 entrega una potencia contundente y a la vez dócil, mientras la electrónica de última generación y la suspensión semiactiva WP mantienen el control tanto en autopista como fuera del asfalto. Pensada para devorar kilómetros con comodidad, seguridad y carácter KTM.',
     specs: {
@@ -282,6 +286,10 @@ export const FICHAS = {
 
   'ktm 990 rc r': {
     subtitulo: 'Alma de circuito',
+    colores: [
+      { nombre: 'Naranja KTM', hex: '#FF6600' },
+      { nombre: 'Grafito', hex: '#45474c', imagen: '/images/ktm-990-rcr-grafito.webp' },
+    ],
     descripcion:
       'Una deportiva de calle con actitud de pista. Comparte el potente bicilíndrico de 947 cm³ con la familia 990 y lo envuelve en una aerodinámica afilada y una posición de conducción totalmente deportiva. Precisa, rápida y emocionante en cada trazada.',
     specs: {

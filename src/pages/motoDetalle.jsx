@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { getMotoById, getMotos } from '../services/motoService';
-import { obtenerFicha, COLORES_DEFECTO } from '../data/fichasTecnicas';
+import { obtenerFicha } from '../data/fichasTecnicas';
 import './motoDetalle.css';
 
 function MotoDetalle() {
@@ -21,8 +21,12 @@ function MotoDetalle() {
   }, [id]);
 
   const ficha = useMemo(() => (moto ? obtenerFicha(moto.titulo) : null), [moto]);
-  const colores = ficha ? ficha.colores : COLORES_DEFECTO;
-  const color = colores[Math.min(colorActivo, colores.length - 1)];
+  // El configurador de color solo se muestra si el modelo tiene varias FOTOS
+  // reales (cada color con su propia imagen). Sin ellas, no se inventan variantes.
+  const colores = ficha && Array.isArray(ficha.colores) && ficha.colores.length ? ficha.colores : null;
+  const tieneConfigurador = colores && colores.length > 1;
+  const color = colores ? colores[Math.min(colorActivo, colores.length - 1)] : null;
+  const imagenActiva = (color && color.imagen) || (moto && moto.imagen);
 
   const relacionados = useMemo(
     () => {
@@ -61,35 +65,36 @@ function MotoDetalle() {
         <div className="md-stage">
           <div className="md-stage-glow" aria-hidden="true" />
           <img
-            src={moto.imagen}
-            alt={`${moto.titulo} — ${color.nombre}`}
+            src={imagenActiva}
+            alt={color ? `${moto.titulo} — ${color.nombre}` : moto.titulo}
             className="md-stage-img"
-            style={{ filter: color.filtro }}
           />
           {moto.estado && moto.estado !== 'Disponible' && (
             <span className="md-estado">{moto.estado}</span>
           )}
         </div>
 
-        <div className="md-config">
-          <p className="md-config-label">
-            Configurador · Color <strong>{color.nombre}</strong>
-          </p>
-          <div className="md-swatches">
-            {colores.map((c, i) => (
-              <button
-                key={c.nombre}
-                type="button"
-                className={`md-swatch ${i === colorActivo ? 'is-active' : ''}`}
-                style={{ '--sw': c.hex }}
-                onClick={() => setColorActivo(i)}
-                aria-label={c.nombre}
-                aria-pressed={i === colorActivo}
-                title={c.nombre}
-              />
-            ))}
+        {tieneConfigurador && (
+          <div className="md-config">
+            <p className="md-config-label">
+              Configurador · Color <strong>{color.nombre}</strong>
+            </p>
+            <div className="md-swatches">
+              {colores.map((c, i) => (
+                <button
+                  key={c.nombre}
+                  type="button"
+                  className={`md-swatch ${i === colorActivo ? 'is-active' : ''}`}
+                  style={{ '--sw': c.hex }}
+                  onClick={() => setColorActivo(i)}
+                  aria-label={c.nombre}
+                  aria-pressed={i === colorActivo}
+                  title={c.nombre}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* DESCRIPCIÓN */}

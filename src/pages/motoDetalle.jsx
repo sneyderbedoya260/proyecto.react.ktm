@@ -1,74 +1,151 @@
 import { Link, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { getMotoById } from '../services/motoService';
-import carouselData from '../components/carouselData';
+import { useEffect, useMemo, useState } from 'react';
+import { getMotoById, getMotos } from '../services/motoService';
+import { obtenerFicha, COLORES_DEFECTO } from '../data/fichasTecnicas';
 import './motoDetalle.css';
 
 function MotoDetalle() {
   const { id } = useParams();
   const [moto, setMoto] = useState(undefined);
+  const [todas, setTodas] = useState([]);
+  const [colorActivo, setColorActivo] = useState(0);
 
   useEffect(() => {
     let activo = true;
-    getMotoById(id).then((resultado) => {
-      if (activo) setMoto(resultado);
-    });
+    setMoto(undefined);
+    setColorActivo(0);
+    getMotoById(id).then((r) => { if (activo) setMoto(r); });
+    getMotos().then((r) => { if (activo) setTodas(r); });
+    window.scrollTo({ top: 0, behavior: 'instant' });
     return () => { activo = false; };
   }, [id]);
 
-  const modelosRelacionados = carouselData
-    .filter((modelo) => String(modelo.id) !== String(id))
-    .slice(0, 4);
+  const ficha = useMemo(() => (moto ? obtenerFicha(moto.titulo) : null), [moto]);
+  const colores = ficha ? ficha.colores : COLORES_DEFECTO;
+  const color = colores[Math.min(colorActivo, colores.length - 1)];
 
-  if (moto === undefined) {
-    return <main className="moto-state">Cargando modelo...</main>;
-  }
+  const relacionados = useMemo(
+    () => {
+      if (!moto) return [];
+      const otros = todas.filter((m) => String(m.id) !== String(moto.id));
+      const misma = otros.filter((m) => (m.categoria || '').toLowerCase() === (moto.categoria || '').toLowerCase());
+      return [...misma, ...otros.filter((m) => !misma.includes(m))].slice(0, 4);
+    },
+    [moto, todas],
+  );
 
+  if (moto === undefined) return <main className="md-state">Cargando modelo...</main>;
   if (!moto) {
     return (
-      <main className="moto-state">
+      <main className="md-state">
         <h1>Modelo no encontrado</h1>
-        <Link to="/">Volver al catálogo</Link>
+        <Link className="md-back-link" to="/">Volver al catálogo</Link>
       </main>
     );
   }
 
+  const descripcion = ficha ? ficha.descripcion : moto.detalle || moto.descripcion;
+
   return (
-    <main className="moto-detail">
-      <Link className="moto-back" to="/">← Volver al catálogo</Link>
-      <div className="moto-detail-grid">
-        <div className="moto-detail-image-wrap">
-          <img src={moto.imagen} alt={moto.titulo} className="moto-detail-image" />
-        </div>
-        <div className="moto-detail-content">
-          <span className="moto-detail-category">{moto.categoria}</span>
-          <h1>{moto.titulo}</h1>
-          <p className="moto-detail-summary">{moto.descripcion}</p>
-          <div className="moto-detail-line" />
-          <h2>Descripción</h2>
-          <p>{moto.detalle}</p>
-          <p className="moto-detail-note">Aquí podrás añadir especificaciones, precio y disponibilidad.</p>
-        </div>
-      </div>
+    <main className="md">
+      <Link className="md-back" to="/">← Volver al catálogo</Link>
 
-      <section className="related-section">
-        <div className="related-header">
-          <p className="related-kicker">KTM</p>
-          <h2>Te puede gustar</h2>
+      {/* HERO + CONFIGURADOR */}
+      <section className="md-hero">
+        <div className="md-hero-head">
+          <span className="md-cat">{moto.categoria}</span>
+          <h1 className="md-title">{moto.titulo}</h1>
+          {ficha && <p className="md-tagline">{ficha.subtitulo}</p>}
         </div>
 
-        <div className="related-grid">
-          {modelosRelacionados.map((modelo) => (
-            <Link key={modelo.id} to={`/motos/${modelo.id}`} className="related-card">
-              <img src={modelo.imagen} alt={modelo.titulo} />
-              <div className="related-card-body">
-                <span className="related-label">Catálogo principal</span>
-                <h3>{modelo.titulo}</h3>
-              </div>
-            </Link>
-          ))}
+        <div className="md-stage">
+          <div className="md-stage-glow" aria-hidden="true" />
+          <img
+            src={moto.imagen}
+            alt={`${moto.titulo} — ${color.nombre}`}
+            className="md-stage-img"
+            style={{ filter: color.filtro }}
+          />
+          {moto.estado && moto.estado !== 'Disponible' && (
+            <span className="md-estado">{moto.estado}</span>
+          )}
+        </div>
+
+        <div className="md-config">
+          <p className="md-config-label">
+            Configurador · Color <strong>{color.nombre}</strong>
+          </p>
+          <div className="md-swatches">
+            {colores.map((c, i) => (
+              <button
+                key={c.nombre}
+                type="button"
+                className={`md-swatch ${i === colorActivo ? 'is-active' : ''}`}
+                style={{ '--sw': c.hex }}
+                onClick={() => setColorActivo(i)}
+                aria-label={c.nombre}
+                aria-pressed={i === colorActivo}
+                title={c.nombre}
+              />
+            ))}
+          </div>
         </div>
       </section>
+
+      {/* DESCRIPCIÓN */}
+      <section className="md-block">
+        <p className="md-kicker">El modelo</p>
+        <h2 className="md-block-title">{moto.descripcion || 'Carácter KTM'}</h2>
+        <p className="md-lead">{descripcion}</p>
+      </section>
+
+      {/* FICHA TÉCNICA */}
+      {ficha && (
+        <section className="md-specs">
+          <div className="md-specs-head">
+            <p className="md-kicker">Ficha técnica</p>
+            <h2 className="md-block-title">Detalles técnicos</h2>
+          </div>
+          <div className="md-specs-groups">
+            {Object.entries(ficha.specs).map(([grupo, items]) => (
+              <div className="md-spec-group" key={grupo}>
+                <h3>{grupo}</h3>
+                <ul>
+                  {items.map((it) => (
+                    <li key={it.e}>
+                      <span className="md-spec-e">{it.e}</span>
+                      <span className="md-spec-v">{it.v}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* RELACIONADOS */}
+      {relacionados.length > 0 && (
+        <section className="md-related">
+          <div className="md-related-head">
+            <p className="md-kicker">Explora más</p>
+            <h2 className="md-block-title">Otros modelos</h2>
+          </div>
+          <div className="md-related-grid">
+            {relacionados.map((m) => (
+              <Link key={m.id} to={`/motos/${m.id}`} className="md-related-card">
+                <div className="md-related-img">
+                  <img src={m.imagen || m.imagen_url} alt={m.titulo} />
+                </div>
+                <div className="md-related-body">
+                  <span className="md-related-cat">{m.categoria}</span>
+                  <h3>{m.titulo}</h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

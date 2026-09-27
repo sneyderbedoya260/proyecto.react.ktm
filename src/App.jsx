@@ -17,6 +17,7 @@ import Dashboard from './pages/dashboard';
 import AdminProductos from './pages/admin/Productos';
 import AdminUsuarios from './pages/admin/Usuarios';
 import AdminPqr from './pages/admin/PqrAdmin';
+import AdminContenido from './pages/admin/Contenido';
 import './App.css';
 
 function ScrollToTop() {
@@ -55,6 +56,7 @@ function App() {
           <Route path="productos" element={<AdminProductos />} />
           <Route path="pqr" element={<AdminPqr />} />
           <Route path="usuarios" element={<AdminUsuarios />} />
+          <Route path="contenido" element={<AdminContenido />} />
         </Route>
       </Routes>
 

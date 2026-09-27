@@ -291,3 +291,35 @@ def test_admin_edita_usuario():
     assert r.json()["nombre"] == "Pedro Andres"
     assert r.json()["rol"] == "Empleado"
     assert r.json()["telefono"] == "3009998877"
+
+
+# --------------------------------------------------------------------------- #
+# Contenido del sitio (CMS)
+# --------------------------------------------------------------------------- #
+def test_contenido_publico_trae_defectos():
+    r = client.get("/api/contenido")
+    assert r.status_code == 200
+    assert "contacto_email" in r.json()
+    assert "quienes_texto" in r.json()
+
+
+def test_contenido_editable_solo_admin():
+    # Un cliente no puede editar el contenido.
+    hc = _headers("cliente@test.com", "Cliente123")
+    assert client.put("/api/contenido", json={"contacto_email": "x@x.com"}, headers=hc).status_code == 403
+    # El admin sí, y el cambio persiste.
+    ha = _headers("admin@ktm.com", "Admin1234")
+    r = client.put("/api/contenido", json={"contacto_telefono": "+57 311 222 3344"}, headers=ha)
+    assert r.status_code == 200
+    assert client.get("/api/contenido").json()["contacto_telefono"] == "+57 311 222 3344"
+
+
+def test_producto_con_galeria():
+    h = _headers("admin@ktm.com", "Admin1234")
+    r = client.post("/api/productos", json={
+        "titulo": "KTM Test Galería", "descripcion": "d", "detalle": "det", "categoria": "naked",
+        "imagen_url": "/images/a.jpg", "galeria": ["/images/a.jpg", "/images/b.jpg"],
+        "precio": 1000, "estado": "Disponible",
+    }, headers=h)
+    assert r.status_code == 201, r.text
+    assert r.json()["galeria"] == ["/images/a.jpg", "/images/b.jpg"]

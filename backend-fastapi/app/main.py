@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import (
-    auth, chatbot, dashboard, imagenes, productos, pqr, usuarios,
+    auth, chatbot, contenido, dashboard, imagenes, productos, pqr, usuarios,
 )
 
 app = FastAPI(
@@ -46,6 +46,7 @@ app.include_router(imagenes.router)
 app.include_router(dashboard.router)
 app.include_router(pqr.router)
 app.include_router(usuarios.router)
+app.include_router(contenido.router)
 
 
 @app.get("/api/salud", tags=["Salud"])

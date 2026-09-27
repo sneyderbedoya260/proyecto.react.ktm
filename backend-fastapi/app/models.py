@@ -1,5 +1,6 @@
 from sqlalchemy import (
     DECIMAL,
+    JSON,
     TIMESTAMP,
     LargeBinary,
     Column,
@@ -51,6 +52,9 @@ class Producto(Base):
     detalle = Column(Text, nullable=False)
     categoria = Column(String(60), nullable=False)
     imagen_url = Column(String(500), nullable=False)
+    # Galería: lista de URLs de imágenes adicionales (además de la portada
+    # imagen_url). Permite varias fotos por producto.
+    galeria = Column(JSON, nullable=True, default=list)
     precio = Column(DECIMAL(12, 2), nullable=False, default=0)
     estado = Column(String(12), nullable=False, default="Disponible")
     creado_en = Column(TIMESTAMP, server_default=func.now())
@@ -110,3 +114,18 @@ class Imagen(Base):
     tipo_mime = Column(String(60), nullable=False)
     contenido = Column(LargeBinary, nullable=False)
     creado_en = Column(TIMESTAMP, server_default=func.now())
+
+
+class Contenido(Base):
+    """Contenido editable del sitio (clave→valor).
+
+    Guarda textos administrables desde el panel: contactos, "quiénes somos",
+    portada, etc. Así todo el contenido se puede editar sin tocar el código.
+    """
+
+    __tablename__ = "contenido_sitio"
+
+    id = Column(Integer, primary_key=True)
+    clave = Column(String(60), unique=True, nullable=False)
+    valor = Column(Text, nullable=False, default="")
+    actualizado_en = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

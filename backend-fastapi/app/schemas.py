@@ -90,6 +90,7 @@ class ProductoIn(BaseModel):
     detalle: str
     categoria: str
     imagen_url: str
+    galeria: List[str] = []
     precio: Decimal = Decimal("0")
     estado: Optional[str] = "Disponible"
 
@@ -101,8 +102,14 @@ class ProductoOut(BaseModel):
     detalle: str
     categoria: str
     imagen_url: str
+    galeria: List[str] = []
     precio: Decimal
     estado: str
+
+    @field_validator("galeria", mode="before")
+    @classmethod
+    def _galeria_lista(cls, v):
+        return v or []
 
     model_config = {"from_attributes": True}
 

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.dependencies import requerir_rol
+from app.migraciones import asegurar_migraciones
 from app.models import Imagen, Producto
 from app.schemas import MensajeOut, ProductoIn, ProductoOut
 
@@ -19,6 +20,7 @@ TAMANO_MAXIMO_MB = 5
 
 @router.get("", response_model=List[ProductoOut])
 def listar_productos(db: Session = Depends(get_db)):
+    asegurar_migraciones(db)
     return db.query(Producto).order_by(Producto.id.desc()).all()
 
 
@@ -36,6 +38,7 @@ def crear_producto(
     db: Session = Depends(get_db),
     _usuario: dict = Depends(requerir_rol("Administrador", "Empleado")),
 ):
+    asegurar_migraciones(db)
     producto = Producto(**datos.model_dump())
     db.add(producto)
     db.commit()
@@ -50,6 +53,7 @@ def actualizar_producto(
     db: Session = Depends(get_db),
     _usuario: dict = Depends(requerir_rol("Administrador", "Empleado")),
 ):
+    asegurar_migraciones(db)
     producto = db.get(Producto, producto_id)
     if not producto:
         raise HTTPException(status_code=404, detail={"mensaje": "Producto no encontrado."})
@@ -77,37 +81,50 @@ def eliminar_producto(
 @router.post("/upload")
 async def subir_imagen(
     request: Request,
-    imagen: UploadFile = File(...),
+    imagenes: List[UploadFile] = File(...),
     db: Session = Depends(get_db),
     _usuario: dict = Depends(requerir_rol("Administrador", "Empleado")),
 ):
-    """Guarda la imagen en la base de datos y devuelve la URL para servirla.
+    """Guarda una o varias imágenes y devuelve sus URLs.
 
-    Antes se escribía en public/images/, pero en una función serverless el
-    disco es de solo lectura y además se borra entre invocaciones, así que la
-    imagen se guarda en Neon y se sirve desde /api/imagenes/{nombre}.
+    Acepta múltiples archivos (campo `imagenes`) para que el administrador pueda
+    subir varias fotos de un producto de una vez. Las imágenes se guardan en la
+    base (el disco serverless es de solo lectura) y se sirven desde
+    /api/imagenes/{nombre}.
     """
-    if imagen.content_type not in TIPOS_PERMITIDOS:
-        raise HTTPException(
-            status_code=400,
-            detail={"mensaje": "Formato de imagen no permitido. Usa JPG, PNG, WEBP o GIF."},
-        )
+    asegurar_migraciones(db)
+    if not imagenes:
+        raise HTTPException(status_code=400, detail={"mensaje": "No se recibió ninguna imagen."})
 
-    contenido = await imagen.read()
-    if len(contenido) > TAMANO_MAXIMO_MB * 1024 * 1024:
-        raise HTTPException(status_code=400, detail={"mensaje": f"La imagen no puede superar {TAMANO_MAXIMO_MB}MB."})
-
-    extension = os.path.splitext(imagen.filename or "")[1].lower() or ".jpg"
-    nombre_unico = f"moto-{uuid.uuid4().hex}{extension}"
-
-    db.add(Imagen(nombre=nombre_unico, tipo_mime=imagen.content_type, contenido=contenido))
-    db.commit()
-
-    # Absoluta: el frontend está en otro dominio y no puede resolverla relativa.
+    # Base absoluta (el frontend vive en otro dominio); se fuerza https tras el
+    # proxy de Vercel para no romper por contenido mixto.
     base = str(request.base_url).rstrip("/")
     if settings.es_serverless and base.startswith("http://"):
-        # Detrás del proxy de Vercel el esquema puede llegar como http; forzar
-        # https evita que el navegador bloquee la imagen por contenido mixto.
         base = "https://" + base[len("http://") :]
-    url = f"{base}/api/imagenes/{nombre_unico}"
-    return {"mensaje": "Imagen subida correctamente.", "url": url, "imagen_url": url}
+
+    urls: List[str] = []
+    for imagen in imagenes:
+        if imagen.content_type not in TIPOS_PERMITIDOS:
+            raise HTTPException(
+                status_code=400,
+                detail={"mensaje": f"Formato no permitido en '{imagen.filename}'. Usa JPG, PNG, WEBP o GIF."},
+            )
+        contenido = await imagen.read()
+        if len(contenido) > TAMANO_MAXIMO_MB * 1024 * 1024:
+            raise HTTPException(
+                status_code=400,
+                detail={"mensaje": f"'{imagen.filename}' supera {TAMANO_MAXIMO_MB}MB."},
+            )
+        extension = os.path.splitext(imagen.filename or "")[1].lower() or ".jpg"
+        nombre_unico = f"moto-{uuid.uuid4().hex}{extension}"
+        db.add(Imagen(nombre=nombre_unico, tipo_mime=imagen.content_type, contenido=contenido))
+        urls.append(f"{base}/api/imagenes/{nombre_unico}")
+
+    db.commit()
+    return {
+        "mensaje": f"{len(urls)} imagen(es) subida(s) correctamente.",
+        "urls": urls,
+        # Compatibilidad: la primera imagen como url/imagen_url.
+        "url": urls[0],
+        "imagen_url": urls[0],
+    }

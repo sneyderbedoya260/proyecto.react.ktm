@@ -21,12 +21,25 @@ function MotoDetalle() {
   }, [id]);
 
   const ficha = useMemo(() => (moto ? obtenerFicha(moto.titulo) : null), [moto]);
-  // El configurador de color solo se muestra si el modelo tiene varias FOTOS
-  // reales (cada color con su propia imagen). Sin ellas, no se inventan variantes.
-  const colores = ficha && Array.isArray(ficha.colores) && ficha.colores.length ? ficha.colores : null;
-  const tieneConfigurador = colores && colores.length > 1;
-  const color = colores ? colores[Math.min(colorActivo, colores.length - 1)] : null;
-  const imagenActiva = (color && color.imagen) || (moto && moto.imagen);
+
+  // Galería unificada: las fotos del producto (portada + galería administrable)
+  // y las variantes de color de la ficha. Se deduplican por URL.
+  const imagenes = useMemo(() => {
+    if (!moto) return [];
+    const colores = ficha && Array.isArray(ficha.colores) ? ficha.colores : [];
+    const lista = [];
+    const add = (url, nombre) => {
+      if (url && !lista.some((x) => x.url === url)) lista.push({ url, nombre: nombre || null });
+    };
+    add(moto.imagen, colores[0] ? colores[0].nombre : null);
+    (Array.isArray(moto.galeria) ? moto.galeria : []).forEach((u) => add(u, null));
+    colores.forEach((c) => c.imagen && add(c.imagen, c.nombre));
+    return lista;
+  }, [moto, ficha]);
+
+  const activo = imagenes.length ? Math.min(colorActivo, imagenes.length - 1) : 0;
+  const imagenActiva = imagenes[activo] || null;
+  const tieneGaleria = imagenes.length > 1;
 
   const relacionados = useMemo(
     () => {
@@ -64,33 +77,36 @@ function MotoDetalle() {
 
         <div className="md-stage">
           <div className="md-stage-glow" aria-hidden="true" />
-          <img
-            src={imagenActiva}
-            alt={color ? `${moto.titulo} — ${color.nombre}` : moto.titulo}
-            className="md-stage-img"
-          />
+          {imagenActiva && (
+            <img
+              src={imagenActiva.url}
+              alt={imagenActiva.nombre ? `${moto.titulo} — ${imagenActiva.nombre}` : moto.titulo}
+              className="md-stage-img"
+            />
+          )}
           {moto.estado && moto.estado !== 'Disponible' && (
             <span className="md-estado">{moto.estado}</span>
           )}
         </div>
 
-        {tieneConfigurador && (
+        {tieneGaleria && (
           <div className="md-config">
-            <p className="md-config-label">
-              Configurador · Color <strong>{color.nombre}</strong>
-            </p>
-            <div className="md-swatches">
-              {colores.map((c, i) => (
+            {imagenActiva && imagenActiva.nombre && (
+              <p className="md-config-label">Color <strong>{imagenActiva.nombre}</strong></p>
+            )}
+            <div className="md-thumbs">
+              {imagenes.map((img, i) => (
                 <button
-                  key={c.nombre}
+                  key={img.url}
                   type="button"
-                  className={`md-swatch ${i === colorActivo ? 'is-active' : ''}`}
-                  style={{ '--sw': c.hex }}
+                  className={`md-thumb ${i === activo ? 'is-active' : ''}`}
                   onClick={() => setColorActivo(i)}
-                  aria-label={c.nombre}
-                  aria-pressed={i === colorActivo}
-                  title={c.nombre}
-                />
+                  aria-label={img.nombre || `Vista ${i + 1}`}
+                  aria-pressed={i === activo}
+                  title={img.nombre || `Vista ${i + 1}`}
+                >
+                  <img src={img.url} alt="" />
+                </button>
               ))}
             </div>
           </div>

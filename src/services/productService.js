@@ -22,17 +22,17 @@ export async function listarProductosAdmin() {
   return response.json();
 }
 
-export async function subirImagenProducto(archivo) {
+export async function subirImagenesProducto(archivos) {
   const formData = new FormData();
-  formData.append('imagen', archivo);
+  Array.from(archivos).forEach((archivo) => formData.append('imagenes', archivo));
   const response = await fetch(`${API_URL}/productos/upload`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${getToken()}` },
     body: formData,
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.mensaje || 'No fue posible subir la imagen.');
-  return data;
+  if (!response.ok) throw new Error(data?.detail?.mensaje || data.mensaje || 'No fue posible subir las imágenes.');
+  return data; // { urls: [...], url, imagen_url }
 }
 
 export function crearProducto(producto) {

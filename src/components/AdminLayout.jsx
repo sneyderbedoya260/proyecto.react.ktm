@@ -9,6 +9,7 @@ const ENLACES = [
   { to: '/admin/productos', label: 'Productos', icon: '🏍️' },
   { to: '/admin/pqr', label: 'PQR', icon: '💬' },
   { to: '/admin/usuarios', label: 'Usuarios', icon: '👥', soloAdmin: true },
+  { to: '/admin/contenido', label: 'Contenido', icon: '📝', soloAdmin: true },
 ];
 
 function AdminLayout() {

@@ -8,6 +8,11 @@
   --ktm-white: #FFFFFF;
   --font-body: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   --font-display: "Oswald", "Segoe UI", system-ui, sans-serif;
+  /* Superficie de tarjeta unificada (mismo tono en todo el sitio) y curva de
+     animación común, para un diseño limpio y transiciones fluidas. */
+  --card: #17171a;
+  --card-hover: #1c1c20;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * {

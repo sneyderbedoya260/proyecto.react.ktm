@@ -30,7 +30,7 @@ DEFECTOS = {
     "contacto_email": "contacto@ktmcatalogo.com",
     "contacto_telefono": "+57 300 000 0000",
     "contacto_direccion": "Concesionario KTM Autocolombiana, Medellín",
-    "contacto_whatsapp": "573000000000",
+    "contacto_whatsapp": "573005156933",
     # Footer
     "footer_titulo": "Catálogo oficial",
     "footer_texto": "Descubre la moto perfecta para tu estilo, ya sea ciudad, aventura o pista.",

@@ -122,7 +122,10 @@ function MotoDetalle() {
 
       {/* FICHA TÉCNICA */}
       {ficha && (
-        <section className="md-specs">
+        <section className={`md-specs ${moto.fondo_url ? 'tiene-fondo' : ''}`}>
+          {moto.fondo_url && (
+            <div className="md-specs-fondo" style={{ backgroundImage: `url(${moto.fondo_url})` }} aria-hidden="true" />
+          )}
           <div className="md-specs-head">
             <p className="md-kicker">Ficha técnica</p>
             <h2 className="md-block-title">Detalles técnicos</h2>

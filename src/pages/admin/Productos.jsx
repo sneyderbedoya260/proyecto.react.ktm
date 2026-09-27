@@ -12,6 +12,8 @@ function AdminProductos() {
   const [cargando, setCargando] = useState(true);
   const [formulario, setFormulario] = useState(datosVacios);
   const [imagenes, setImagenes] = useState([]); // lista de URLs (la primera es la portada)
+  const [fondo, setFondo] = useState(''); // imagen de fondo de la ficha técnica
+  const [subiendoFondo, setSubiendoFondo] = useState(false);
   const [urlManual, setUrlManual] = useState('');
   const [editandoId, setEditandoId] = useState(null);
   const [mensaje, setMensaje] = useState('');
@@ -52,6 +54,22 @@ function AdminProductos() {
     }
   };
 
+  const manejarFondo = async (e) => {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+    setSubiendoFondo(true);
+    setMensaje('');
+    try {
+      const resultado = await subirImagenesProducto([archivo]);
+      setFondo((resultado.urls && resultado.urls[0]) || '');
+    } catch (error) {
+      setMensaje(error.message || 'No fue posible subir el fondo.');
+    } finally {
+      setSubiendoFondo(false);
+      e.target.value = '';
+    }
+  };
+
   const agregarUrl = () => {
     const u = urlManual.trim();
     if (u) { setImagenes((a) => [...a, u]); setUrlManual(''); }
@@ -70,11 +88,12 @@ function AdminProductos() {
     const galeria = Array.isArray(p.galeria) ? p.galeria : [];
     const todas = [p.imagen_url, ...galeria].filter(Boolean);
     setImagenes([...new Set(todas)]);
+    setFondo(p.fondo_url || '');
     setMensaje('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const cancelarEdicion = () => { setEditandoId(null); setFormulario(datosVacios); setImagenes([]); setUrlManual(''); };
+  const cancelarEdicion = () => { setEditandoId(null); setFormulario(datosVacios); setImagenes([]); setFondo(''); setUrlManual(''); };
 
   const enviarFormulario = async (e) => {
     e.preventDefault();
@@ -82,7 +101,7 @@ function AdminProductos() {
     if (!imagenes.length) { setMensaje('Agrega al menos una imagen.'); return; }
     setEnviando(true);
     setMensaje('');
-    const payload = { ...formulario, imagen_url: imagenes[0], galeria: imagenes };
+    const payload = { ...formulario, imagen_url: imagenes[0], galeria: imagenes, fondo_url: fondo || null };
     try {
       if (editandoId) {
         await actualizarProducto(editandoId, payload);
@@ -164,6 +183,20 @@ function AdminProductos() {
             <input className={`${inp} flex-1`} value={urlManual} onChange={(e) => setUrlManual(e.target.value)} placeholder="O pega una URL de imagen y agrégala" />
             <button type="button" onClick={agregarUrl} className="rounded border border-neutral-500 px-4 text-sm font-bold uppercase text-neutral-200">Agregar</button>
           </div>
+        </div>
+
+        {/* Imagen de fondo para la ficha técnica */}
+        <div className="grid gap-2 text-sm sm:col-span-2">
+          <label className="grid gap-1">Imagen de fondo (detrás de las especificaciones) — opcional
+            <input type="file" accept="image/*" className="rounded border border-neutral-600 bg-black/40 px-3 py-2 text-neutral-200 file:mr-3 file:rounded file:border-0 file:bg-[var(--ktm-orange)] file:px-3 file:py-2 file:font-bold file:text-black" onChange={manejarFondo} disabled={subiendoFondo} />
+          </label>
+          {subiendoFondo && <span className="text-xs text-neutral-400">Subiendo fondo...</span>}
+          {fondo && (
+            <div className="relative w-fit">
+              <img src={fondo} alt="Fondo" className="h-24 w-44 rounded object-cover border border-neutral-700" />
+              <button type="button" onClick={() => setFondo('')} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs text-white" aria-label="Quitar fondo">✕</button>
+            </div>
+          )}
         </div>
 
         <label className="grid gap-1 text-sm sm:col-span-2">Detalle completo

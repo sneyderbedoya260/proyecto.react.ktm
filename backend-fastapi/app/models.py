@@ -55,6 +55,8 @@ class Producto(Base):
     # Galería: lista de URLs de imágenes adicionales (además de la portada
     # imagen_url). Permite varias fotos por producto.
     galeria = Column(JSON, nullable=True, default=list)
+    # Imagen de fondo para la seccion de especificaciones (opcional).
+    fondo_url = Column(String(500), nullable=True)
     precio = Column(DECIMAL(12, 2), nullable=False, default=0)
     estado = Column(String(12), nullable=False, default="Disponible")
     creado_en = Column(TIMESTAMP, server_default=func.now())

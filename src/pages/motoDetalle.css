@@ -39,7 +39,7 @@
   overflow: hidden;
   background:
     radial-gradient(120% 90% at 50% 0%, #202024 0%, #141416 55%, #0c0c0d 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid transparent;
   padding: 40px 24px 28px;
   text-align: center;
 }
@@ -224,6 +224,33 @@
 /* ===================== FICHA TÉCNICA ===================== */
 .md-specs { margin-top: 56px; }
 
+/* Cuando el modelo tiene imagen de fondo, se muestra tenue detrás de las
+   especificaciones, con un velo oscuro para que el texto siga legible. */
+.md-specs.tiene-fondo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 30px 24px;
+  isolation: isolate;
+}
+
+.md-specs-fondo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.32;
+}
+
+.md-specs.tiene-fondo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(130% 100% at 50% 0%, rgba(13, 13, 13, 0.55), rgba(13, 13, 13, 0.82));
+}
+
 .md-specs-head { margin-bottom: 24px; }
 
 .md-specs-groups {
@@ -233,8 +260,8 @@
 }
 
 .md-spec-group {
-  background: linear-gradient(180deg, #1b1b1d 0%, #141416 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--card);
+  border: 1px solid transparent;
   border-radius: 14px;
   padding: 20px 22px;
 }
@@ -292,8 +319,8 @@
 .md-related-card {
   display: block;
   text-decoration: none;
-  background: linear-gradient(180deg, #1b1b1d 0%, #101011 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--card);
+  border: 1px solid transparent;
   border-radius: 14px;
   overflow: hidden;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;

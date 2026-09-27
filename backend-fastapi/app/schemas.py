@@ -91,6 +91,7 @@ class ProductoIn(BaseModel):
     categoria: str
     imagen_url: str
     galeria: List[str] = []
+    fondo_url: Optional[str] = None
     precio: Decimal = Decimal("0")
     estado: Optional[str] = "Disponible"
 
@@ -103,6 +104,7 @@ class ProductoOut(BaseModel):
     categoria: str
     imagen_url: str
     galeria: List[str] = []
+    fondo_url: Optional[str] = None
     precio: Decimal
     estado: str
 

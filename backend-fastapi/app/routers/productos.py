@@ -14,8 +14,58 @@ from app.schemas import MensajeOut, ProductoIn, ProductoOut
 
 router = APIRouter(prefix="/api/productos", tags=["Productos"])
 
-TIPOS_PERMITIDOS = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-TAMANO_MAXIMO_MB = 5
+# Formatos que el navegador muestra tal cual; cualquier otro se convierte a PNG.
+TIPOS_WEB = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+TAMANO_MAXIMO_MB = 12
+
+# Soporte opcional para más formatos (HEIC/HEIF de iPhone) si la librería está.
+try:  # pragma: no cover
+    import pillow_heif
+
+    pillow_heif.register_heif_opener()
+except Exception:  # noqa: BLE001
+    pass
+
+
+def procesar_imagen(nombre_archivo: str, tipo: str, datos: bytes):
+    """Devuelve (bytes, tipo_mime, extension) listos para servir en la web.
+
+    - Los formatos que el navegador ya muestra (JPG, PNG, WEBP, GIF) se guardan
+      tal cual.
+    - Los SVG (vectoriales) se guardan tal cual.
+    - Cualquier otro formato de imagen (BMP, TIFF, HEIC, etc.) se convierte a
+      PNG con Pillow, para que SIEMPRE se vea, sin importar qué subió el usuario.
+    """
+    nombre = (nombre_archivo or "").lower()
+    if tipo in TIPOS_WEB:
+        ext = os.path.splitext(nombre)[1].lower() or {
+            "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif",
+        }.get(tipo, ".img")
+        return datos, tipo, ext
+    if tipo == "image/svg+xml" or nombre.endswith(".svg"):
+        return datos, "image/svg+xml", ".svg"
+
+    # Convertir a PNG con Pillow (conserva transparencia).
+    from io import BytesIO
+
+    try:
+        from PIL import Image
+    except ImportError:
+        raise HTTPException(
+            status_code=400,
+            detail={"mensaje": f"No se pudo procesar '{nombre_archivo}'. Usa JPG, PNG, WEBP, GIF o SVG."},
+        )
+    try:
+        imagen = Image.open(BytesIO(datos))
+        imagen = imagen.convert("RGBA") if imagen.mode in ("P", "LA", "RGBA") else imagen.convert("RGB")
+        salida = BytesIO()
+        imagen.save(salida, format="PNG")
+        return salida.getvalue(), "image/png", ".png"
+    except Exception:  # noqa: BLE001
+        raise HTTPException(
+            status_code=400,
+            detail={"mensaje": f"'{nombre_archivo}' no es una imagen válida o no se pudo convertir."},
+        )
 
 
 @router.get("", response_model=List[ProductoOut])
@@ -104,20 +154,16 @@ async def subir_imagen(
 
     urls: List[str] = []
     for imagen in imagenes:
-        if imagen.content_type not in TIPOS_PERMITIDOS:
-            raise HTTPException(
-                status_code=400,
-                detail={"mensaje": f"Formato no permitido en '{imagen.filename}'. Usa JPG, PNG, WEBP o GIF."},
-            )
-        contenido = await imagen.read()
-        if len(contenido) > TAMANO_MAXIMO_MB * 1024 * 1024:
+        crudo = await imagen.read()
+        if len(crudo) > TAMANO_MAXIMO_MB * 1024 * 1024:
             raise HTTPException(
                 status_code=400,
                 detail={"mensaje": f"'{imagen.filename}' supera {TAMANO_MAXIMO_MB}MB."},
             )
-        extension = os.path.splitext(imagen.filename or "")[1].lower() or ".jpg"
+        # Acepta cualquier formato de foto y lo deja listo para verse en la web.
+        contenido, tipo_mime, extension = procesar_imagen(imagen.filename, imagen.content_type or "", crudo)
         nombre_unico = f"moto-{uuid.uuid4().hex}{extension}"
-        db.add(Imagen(nombre=nombre_unico, tipo_mime=imagen.content_type, contenido=contenido))
+        db.add(Imagen(nombre=nombre_unico, tipo_mime=tipo_mime, contenido=contenido))
         urls.append(f"{base}/api/imagenes/{nombre_unico}")
 
     db.commit()

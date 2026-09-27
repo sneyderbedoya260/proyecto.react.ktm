@@ -80,8 +80,8 @@
 
 .recommended-card {
   display: block;
-  background: linear-gradient(180deg, #1c1c1c 0%, #101010 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--card);
+  border: 1px solid transparent;
   border-radius: 14px;
   overflow: hidden;
   text-decoration: none;

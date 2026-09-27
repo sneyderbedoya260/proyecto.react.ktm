@@ -64,8 +64,8 @@
 }
 
 .dashboard-card {
-  background: linear-gradient(180deg, #1d1d1d 0%, #151515 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--card);
+  border: 1px solid transparent;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -99,7 +99,7 @@
 
 .dashboard-filtros {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid transparent;
   border-radius: 12px;
   display: grid;
   gap: 14px;
@@ -181,8 +181,8 @@
 }
 
 .dashboard-grafico-card {
-  background: linear-gradient(180deg, #1d1d1d 0%, #151515 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--card);
+  border: 1px solid transparent;
   border-radius: 12px;
   padding: 18px;
 }

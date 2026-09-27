@@ -26,6 +26,7 @@ def asegurar_migraciones(db: Session) -> None:
         # Columna galeria en productos (lista de URLs de imágenes).
         if dialecto == "postgresql":
             db.execute(text("ALTER TABLE productos ADD COLUMN IF NOT EXISTS galeria JSON DEFAULT '[]'::json"))
+            db.execute(text("ALTER TABLE productos ADD COLUMN IF NOT EXISTS fondo_url VARCHAR(500)"))
             db.commit()
         elif dialecto == "mysql":
             existe = db.execute(
